@@ -1,0 +1,42 @@
+@import url("https://fonts.cdnfonts.com/css/general-sans");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary-orange: #F58220;
+  --color-primary-blue: #1E3A8A;
+  --color-white: #FFFFFF;
+  --color-text: #111111;
+  --color-text-secondary: #6B7280;
+  --color-border: #E5E7EB;
+  --color-bg-subtle: #F9FAFB;
+  --color-bg-active: #F3F4F6;
+  --font-heading: "General Sans", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+  body {
+    @apply bg-neutral-white text-neutral-text font-body text-body;
+  }
+  h1 {
+    @apply font-heading text-h1 text-neutral-text;
+  }
+  h2 {
+    @apply font-heading text-h2 text-neutral-text;
+  }
+  h3 {
+    @apply font-heading text-h3 text-neutral-text;
+  }
+}
+
+@layer utilities {
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-blue/20 focus-visible:ring-offset-0;
+  }
+}
