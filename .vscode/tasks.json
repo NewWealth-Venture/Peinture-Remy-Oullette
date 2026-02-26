@@ -3,6 +3,10 @@
   "tasks": [
     {
       "label": "Ouvrir le navigateur (Simple Browser)",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
       "type": "shell",
       "command": "echo ${input:openSimpleBrowser}",
       "problemMatcher": [],
