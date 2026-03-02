@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { CalendarEvent, CalendarEventType } from "@/types/calendar";
+import type { Projet } from "@/types/projet";
 import { X, Trash2 } from "lucide-react";
 
 const TYPES: CalendarEventType[] = ["Chantier", "Rendez-vous", "Interne"];
@@ -23,6 +24,7 @@ function fromISO(iso: string): Date {
 interface EventModalProps {
   open: boolean;
   onClose: () => void;
+  projets?: Projet[];
   initialEvent: CalendarEvent | null;
   onSave: (data: Omit<CalendarEvent, "id"> | Partial<CalendarEvent>) => void;
   onDelete?: () => void;
@@ -31,6 +33,7 @@ interface EventModalProps {
 export function EventModal({
   open,
   onClose,
+  projets = [],
   initialEvent,
   onSave,
   onDelete,
@@ -40,6 +43,7 @@ export function EventModal({
   const [type, setType] = useState<CalendarEventType>("Rendez-vous");
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
+  const [projetId, setProjetId] = useState("");
   const [chantier, setChantier] = useState("");
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -51,6 +55,7 @@ export function EventModal({
       setType(initialEvent.type);
       setDateDebut(toLocalISO(fromISO(initialEvent.dateDebut)));
       setDateFin(toLocalISO(fromISO(initialEvent.dateFin)));
+      setProjetId(initialEvent.projetId ?? "");
       setChantier(initialEvent.chantier ?? "");
       setNotes(initialEvent.notes ?? "");
     } else {
@@ -61,11 +66,21 @@ export function EventModal({
       setType("Rendez-vous");
       setDateDebut(toLocalISO(now));
       setDateFin(toLocalISO(end));
+      setProjetId("");
       setChantier("");
       setNotes("");
     }
     setErrors({});
   }, [open, initialEvent]);
+
+  const onProjetChange = (id: string) => {
+    setProjetId(id);
+    const p = projets.find((x) => x.id === id);
+    if (p) {
+      setTitre(p.titre);
+      if (p.adresse) setNotes((n) => (n ? n + "\n" + p.adresse : p.adresse ?? ""));
+    }
+  };
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};
@@ -84,24 +99,19 @@ export function EventModal({
     if (!validate()) return;
     const debut = new Date(dateDebut);
     const fin = new Date(dateFin);
+    const payload = {
+      titre: titre.trim(),
+      type,
+      dateDebut: debut.toISOString(),
+      dateFin: fin.toISOString(),
+      projetId: projetId || undefined,
+      chantier: chantier.trim() || undefined,
+      notes: notes.trim() || undefined,
+    };
     if (isEdit && initialEvent) {
-      onSave({
-        titre: titre.trim(),
-        type,
-        dateDebut: debut.toISOString(),
-        dateFin: fin.toISOString(),
-        chantier: chantier.trim() || undefined,
-        notes: notes.trim() || undefined,
-      });
+      onSave(payload);
     } else {
-      onSave({
-        titre: titre.trim(),
-        type,
-        dateDebut: debut.toISOString(),
-        dateFin: fin.toISOString(),
-        chantier: chantier.trim() || undefined,
-        notes: notes.trim() || undefined,
-      });
+      onSave(payload);
     }
   };
 
@@ -168,6 +178,25 @@ export function EventModal({
               ))}
             </select>
           </div>
+          {type === "Chantier" && (
+            <div>
+              <label htmlFor="event-projet" className="block text-caption font-medium text-neutral-text mb-1">
+                Projet
+              </label>
+              <select
+                id="event-projet"
+                value={projetId}
+                onChange={(e) => onProjetChange(e.target.value)}
+                disabled={projets.length === 0}
+                className="w-full h-9 px-3 border border-neutral-border rounded bg-neutral-bg-subtle text-body text-neutral-text focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 focus:outline-none disabled:opacity-60"
+              >
+                <option value="">{projets.length === 0 ? "Créez un projet pour planifier un chantier." : "Sélectionner un projet..."}</option>
+                {projets.map((p) => (
+                  <option key={p.id} value={p.id}>{p.titre}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="event-debut" className="block text-caption font-medium text-neutral-text mb-1">

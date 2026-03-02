@@ -6,6 +6,7 @@ export type CalendarEvent = {
   type: CalendarEventType;
   dateDebut: string;
   dateFin: string;
+  projetId?: string;
   chantier?: string;
   notes?: string;
 };

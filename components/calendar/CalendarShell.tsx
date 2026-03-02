@@ -2,11 +2,16 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type { CalendarEvent } from "@/types/calendar";
+import type { Projet } from "@/types/projet";
 import { CalendarToolbar } from "./CalendarToolbar";
 import { MonthView } from "./MonthView";
 import { WeekView } from "./WeekView";
 import { RightPanel } from "./RightPanel";
 import { EventModal } from "./EventModal";
+
+interface CalendarShellProps {
+  projets?: Projet[];
+}
 
 const STORAGE_KEY = "peinture-agenda-events";
 
@@ -31,7 +36,7 @@ function saveEvents(events: CalendarEvent[]) {
   }
 }
 
-export function CalendarShell() {
+export function CalendarShell({ projets = [] }: CalendarShellProps) {
   const [events, setEvents] = useState<CalendarEvent[]>(loadEvents);
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
@@ -146,6 +151,7 @@ export function CalendarShell() {
           setModalOpen(false);
           setEditingEvent(null);
         }}
+        projets={projets}
         initialEvent={editingEvent}
         onSave={editingEvent?.id ? (payload) => updateEvent(editingEvent.id, payload) : addEvent}
         onDelete={editingEvent?.id ? () => deleteEvent(editingEvent.id) : undefined}

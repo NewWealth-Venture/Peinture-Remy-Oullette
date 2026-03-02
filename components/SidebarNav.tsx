@@ -16,6 +16,10 @@ import {
   FileText,
   Banknote,
   Settings,
+  FolderKanban,
+  Package,
+  TrendingUp,
+  ClipboardList,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -29,8 +33,8 @@ const categories: NavCategory[] = [
     icon: LayoutDashboard,
     items: [
       { href: "/accueil/overview", label: "Vue d'ensemble", icon: LayoutDashboard },
-      { href: "/accueil/agenda", label: "Agenda", icon: Calendar },
-      { href: "/accueil/chantiers", label: "Chantiers", icon: MapPin },
+      { href: "/accueil/agenda", label: "Agenda & planification", icon: Calendar },
+      { href: "/accueil/chantiers", label: "Chantiers / Projets", icon: MapPin },
       { href: "/accueil/estime", label: "Estimé", icon: Calculator },
       { href: "/accueil/annonces", label: "Annonces", icon: Megaphone },
     ],
@@ -42,7 +46,9 @@ const categories: NavCategory[] = [
     items: [
       { href: "/employes/liste", label: "Liste", icon: Users },
       { href: "/employes/pointage", label: "Pointage", icon: Clock },
-      { href: "/employes/affectations", label: "Affectations", icon: UserPlus },
+      { href: "/employes/affectations", label: "Brief & affectations", icon: UserPlus },
+      { href: "/employes/avancement", label: "Avancement quotidien", icon: TrendingUp },
+      { href: "/employes/materiel", label: "Matériel utilisé", icon: Package },
       { href: "/employes/demandes", label: "Demandes", icon: FileQuestion },
     ],
   },
@@ -53,6 +59,9 @@ const categories: NavCategory[] = [
     items: [
       { href: "/patron/centre", label: "Centre", icon: Gauge },
       { href: "/patron/rapports", label: "Rapports", icon: FileText },
+      { href: "/patron/projets", label: "Projets", icon: FolderKanban },
+      { href: "/patron/inventaire", label: "Inventaire", icon: ClipboardList },
+      { href: "/patron/affectations", label: "Brief & affectations", icon: UserPlus },
       { href: "/patron/finances", label: "Finances", icon: Banknote },
       { href: "/patron/parametres", label: "Paramètres", icon: Settings },
     ],

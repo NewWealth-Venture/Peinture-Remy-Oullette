@@ -1,582 +1,506 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
+import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
-import { SectionCard } from "@/components/SectionCard";
-import { TableShell } from "@/components/TableShell";
-import { EmptyState } from "@/components/EmptyState";
+import { EmptyInline } from "@/components/EmptyInline";
+import { Modal } from "@/components/ui/Modal";
+import { Field } from "@/components/ui/Field";
+import { Table } from "@/components/ui/Table";
+import {
+  useProjectsStore,
+  useFilteredProjects,
+  getProchaineEtape,
+  getAvancementPourcent,
+  type ProjectsFilters,
+} from "@/lib/projects/store";
+import { useAvancements } from "@/lib/store";
+import { useEmployes } from "@/lib/store";
+import type { Projet, StatutProjet, PrioriteProjet } from "@/types/projet";
 import {
   MapPin,
   Plus,
-  Pencil,
-  Trash2,
-  X,
   Search,
-  Filter,
+  Download,
+  MoreVertical,
+  ExternalLink,
+  Pencil,
+  Calendar,
+  LayoutGrid,
+  List,
+  ClipboardList,
+  Image,
+  Activity,
 } from "lucide-react";
 
-type StatutChantier =
-  | "a_venir"
-  | "en_cours"
-  | "en_attente"
-  | "termine"
-  | "suspendu";
-
-interface Chantier {
-  id: string;
-  nom: string;
-  adresse: string;
-  client: string;
-  telephone: string;
-  statut: StatutChantier;
-  chefEquipe: string;
-  dateDebut: string;
-  dateFinPrevue: string;
-  derniereMaj: string;
-  notes: string;
-}
-
-const STATUT_LABELS: Record<StatutChantier, string> = {
-  a_venir: "À venir",
-  en_cours: "En cours",
-  en_attente: "En attente",
-  termine: "Terminé",
-  suspendu: "Suspendu",
-};
-
-const STATUT_STYLE: Record<StatutChantier, string> = {
-  a_venir: "bg-blue-100 text-blue-800",
-  en_cours: "bg-green-100 text-green-800",
-  en_attente: "bg-amber-100 text-amber-800",
-  termine: "bg-neutral-bg-subtle text-neutral-text-secondary",
-  suspendu: "bg-red-100 text-red-800",
-};
-
-const STORAGE_KEY = "chantiers-data";
-
-function loadChantiers(): Chantier[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const data = JSON.parse(raw);
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveChantiers(list: Chantier[]) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-  } catch {
-    // ignore
-  }
-}
-
-function formatDate(iso: string): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("fr-CA", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-const columns = [
-  "Nom chantier",
-  "Adresse",
-  "Client",
-  "Statut",
-  "Chef d'équipe",
-  "Dernière mise à jour",
-  "Actions",
-];
+const STATUTS: StatutProjet[] = ["À planifier", "En cours", "En attente", "Terminé"];
+const PRIORITES: PrioriteProjet[] = ["Basse", "Normale", "Haute"];
 
 const inputClass =
-  "w-full rounded border border-neutral-border bg-neutral-white px-3 py-2 text-body text-neutral-text focus:border-primary-blue focus:outline-none focus:ring-1 focus:ring-primary-blue";
-const labelClass = "block text-caption text-neutral-text-secondary mb-1";
+  "w-full h-9 px-3 border border-neutral-border rounded bg-neutral-white text-body text-neutral-text focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 focus:outline-none";
 
-interface ChantierModalProps {
-  open: boolean;
-  onClose: () => void;
-  chantier: Chantier | null;
-  onSave: (c: Omit<Chantier, "id" | "derniereMaj">) => void;
-  onDelete?: () => void;
+function formatDate(iso: string | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("fr-CA", { year: "numeric", month: "short", day: "numeric" });
 }
 
-function ChantierModal({
+function formatDateTime(iso: string | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleString("fr-CA", { dateStyle: "short", timeStyle: "short" });
+}
+
+const MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+
+// --- New chantier modal
+function NewChantierModal({
   open,
   onClose,
-  chantier,
-  onSave,
-  onDelete,
-}: ChantierModalProps) {
-  const isEdit = Boolean(chantier?.id);
-  const [nom, setNom] = useState("");
+  onCreate,
+  employes,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCreate: (p: Parameters<ReturnType<typeof useProjectsStore>["createProject"]>[0]) => string;
+  employes: { id: string; nom: string }[];
+}) {
+  const [titre, setTitre] = useState("");
   const [adresse, setAdresse] = useState("");
-  const [client, setClient] = useState("");
-  const [telephone, setTelephone] = useState("");
-  const [statut, setStatut] = useState<StatutChantier>("a_venir");
-  const [chefEquipe, setChefEquipe] = useState("");
+  const [description, setDescription] = useState("");
+  const [statut, setStatut] = useState<StatutProjet>("À planifier");
   const [dateDebut, setDateDebut] = useState("");
-  const [dateFinPrevue, setDateFinPrevue] = useState("");
-  const [notes, setNotes] = useState("");
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (!open) return;
-    if (chantier) {
-      setNom(chantier.nom);
-      setAdresse(chantier.adresse);
-      setClient(chantier.client);
-      setTelephone(chantier.telephone);
-      setStatut(chantier.statut);
-      setChefEquipe(chantier.chefEquipe);
-      setDateDebut(chantier.dateDebut ? chantier.dateDebut.slice(0, 10) : "");
-      setDateFinPrevue(
-        chantier.dateFinPrevue ? chantier.dateFinPrevue.slice(0, 10) : ""
-      );
-      setNotes(chantier.notes);
-    } else {
-      setNom("");
-      setAdresse("");
-      setClient("");
-      setTelephone("");
-      setStatut("a_venir");
-      setChefEquipe("");
-      setDateDebut("");
-      setDateFinPrevue("");
-      setNotes("");
-    }
-    setErrors({});
-  }, [open, chantier]);
-
-  const validate = (): boolean => {
-    const e: Record<string, string> = {};
-    if (!nom.trim()) e.nom = "Le nom du chantier est requis.";
-    if (!adresse.trim()) e.adresse = "L'adresse est requise.";
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
+  const [dateFin, setDateFin] = useState("");
+  const [responsable, setResponsable] = useState("");
+  const [priorite, setPriorite] = useState<PrioriteProjet>("Normale");
+  const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
-    const now = new Date().toISOString();
-    onSave({
-      nom: nom.trim(),
-      adresse: adresse.trim(),
-      client: client.trim(),
-      telephone: telephone.trim(),
+    setError("");
+    if (!titre.trim()) {
+      setError("Le nom du chantier est requis.");
+      return;
+    }
+    onCreate({
+      titre: titre.trim(),
+      adresse: adresse.trim() || undefined,
+      description: description.trim() || undefined,
       statut,
-      chefEquipe: chefEquipe.trim(),
-      dateDebut: dateDebut || "",
-      dateFinPrevue: dateFinPrevue || "",
-      notes: notes.trim(),
+      dateDebut: dateDebut || undefined,
+      dateFin: dateFin || undefined,
+      priorite,
+      responsable: responsable || undefined,
     });
+    setTitre("");
+    setAdresse("");
+    setDescription("");
+    setStatut("À planifier");
+    setDateDebut("");
+    setDateFin("");
+    setResponsable("");
+    setPriorite("Normale");
     onClose();
   };
 
   if (!open) return null;
+  return (
+    <Modal open={open} onClose={onClose} title="Nouveau chantier" maxWidth="lg">
+      <form onSubmit={handleSubmit} className="p-4 space-y-4">
+        {error && <p className="text-caption text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{error}</p>}
+        <Field label="Nom du chantier" required>
+          <input type="text" className={inputClass} value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Ex. Peinture résidence Dupont" />
+        </Field>
+        <Field label="Adresse">
+          <input type="text" className={inputClass} value={adresse} onChange={(e) => setAdresse(e.target.value)} placeholder="Adresse du chantier" />
+        </Field>
+        <Field label="Description">
+          <textarea className={inputClass + " min-h-[80px] resize-y py-2"} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description..." />
+        </Field>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Statut">
+            <select className={inputClass} value={statut} onChange={(e) => setStatut(e.target.value as StatutProjet)}>
+              {STATUTS.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </Field>
+          <Field label="Priorité">
+            <select className={inputClass} value={priorite} onChange={(e) => setPriorite(e.target.value as PrioriteProjet)}>
+              {PRIORITES.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Date de début">
+            <input type="date" className={inputClass} value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} />
+          </Field>
+          <Field label="Date de fin">
+            <input type="date" className={inputClass} value={dateFin} onChange={(e) => setDateFin(e.target.value)} />
+          </Field>
+        </div>
+        <Field label="Responsable">
+          {employes.length > 0 ? (
+            <select className={inputClass} value={responsable} onChange={(e) => setResponsable(e.target.value)}>
+              <option value="">—</option>
+              {employes.map((e) => <option key={e.id} value={e.nom}>{e.nom}</option>)}
+            </select>
+          ) : (
+            <input type="text" className={inputClass} value={responsable} onChange={(e) => setResponsable(e.target.value)} placeholder="Nom du responsable" />
+          )}
+        </Field>
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" onClick={onClose} className="h-9 px-3.5 text-caption font-medium text-neutral-text bg-neutral-bg-subtle border border-neutral-border rounded hover:bg-neutral-bg-active focus-ring">Annuler</button>
+          <button type="submit" className="h-9 px-3.5 text-caption font-medium text-white bg-primary-orange rounded hover:opacity-90 focus-ring">Créer</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+// --- Detail panel
+function DetailPanel({
+  project,
+  onOpenEdit,
+  onAddAvancement,
+  onAddTache,
+  onAddPhoto,
+  avancements,
+}: {
+  project: Projet | null;
+  onOpenEdit: () => void;
+  onAddAvancement: () => void;
+  onAddTache: () => void;
+  onAddPhoto: () => void;
+  avancements: { date: string; resume: string }[];
+}) {
+  if (!project) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-6 text-center border-l border-neutral-border bg-neutral-bg-subtle/30">
+        <MapPin size={32} className="text-neutral-text-secondary mb-3" strokeWidth={1.7} />
+        <p className="text-caption font-medium text-neutral-text">Sélectionnez un chantier</p>
+        <p className="text-caption-xs text-neutral-text-secondary mt-1">Cliquez sur un chantier dans la liste pour afficher son détail.</p>
+      </div>
+    );
+  }
+
+  const taches = project.taches ?? [];
+  const photos = project.photos ?? [];
+  const avancementPct = getAvancementPourcent(project);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30"
-      onClick={onClose}
-    >
-      <div
-        className="bg-neutral-white border border-neutral-border rounded shadow-sm w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col"
-        onClick={(ev) => ev.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-border shrink-0">
-          <h2 className="text-section-title text-neutral-text font-heading">
-            {isEdit ? "Modifier le chantier" : "Nouveau chantier"}
-          </h2>
-          <div className="flex items-center gap-2">
-            {onDelete && isEdit && (
-              <button
-                type="button"
-                onClick={onDelete}
-                className="p-2 text-neutral-text-secondary hover:text-red-600 hover:bg-neutral-bg-active rounded focus-ring"
-                aria-label="Supprimer"
-              >
-                <Trash2 size={18} strokeWidth={1.7} />
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 text-neutral-text-secondary hover:bg-neutral-bg-active rounded focus-ring"
-              aria-label="Fermer"
-            >
-              <X size={18} strokeWidth={1.7} />
+    <div className="h-full flex flex-col border-l border-neutral-border bg-neutral-white overflow-hidden">
+      <div className="shrink-0 px-4 py-3 border-b border-neutral-border">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="font-heading font-medium text-neutral-text truncate">{project.titre}</h3>
+            <span className="inline-flex px-2 py-0.5 rounded text-caption-xs font-medium bg-neutral-bg-subtle text-neutral-text mt-1">{project.statut}</span>
+            {project.adresse && <p className="text-caption-xs text-neutral-text-secondary mt-1 truncate">{project.adresse}</p>}
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <Link href={`/patron/projets/${project.id}`} className="h-8 px-2.5 text-caption font-medium text-primary-orange border border-primary-orange rounded hover:bg-primary-orange/10 focus-ring flex items-center gap-1">
+              <ExternalLink size={14} strokeWidth={1.7} /> Ouvrir
+            </Link>
+            <button type="button" onClick={onOpenEdit} className="h-8 px-2.5 text-caption font-medium text-neutral-text bg-neutral-bg-subtle border border-neutral-border rounded hover:bg-neutral-bg-active focus-ring flex items-center gap-1">
+              <Pencil size={14} strokeWidth={1.7} /> Modifier
             </button>
           </div>
         </div>
-        <form
-          onSubmit={handleSubmit}
-          className="p-4 flex flex-col gap-4 overflow-y-auto"
-        >
-          <div>
-            <label className={labelClass}>Nom du chantier *</label>
-            <input
-              type="text"
-              className={inputClass}
-              value={nom}
-              onChange={(e) => setNom(e.target.value)}
-              placeholder="Ex: Peinture résidence Dupont"
-            />
-            {errors.nom && (
-              <p className="text-caption-xs text-red-600 mt-0.5">{errors.nom}</p>
-            )}
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <section>
+          <h4 className="text-section-title text-neutral-text mb-2">Résumé</h4>
+          <ul className="text-caption text-neutral-text-secondary space-y-1">
+            <li>Dates : {project.dateDebut || project.dateFin ? `${formatDate(project.dateDebut)} → ${formatDate(project.dateFin)}` : "Non planifié"}</li>
+            <li>Responsable : {project.responsable ?? "—"}</li>
+            <li>Priorité : {project.priorite ?? "Normale"}</li>
+          </ul>
+        </section>
+        <section>
+          <h4 className="text-section-title text-neutral-text mb-2">Avancement</h4>
+          <p className="text-caption-xs text-neutral-text-secondary">Dernière mise à jour : {project.derniereMaj ? formatDateTime(project.derniereMaj) : "Aucune mise à jour"}</p>
+          <button type="button" onClick={onAddAvancement} className="mt-2 h-8 px-2.5 text-caption font-medium text-primary-orange border border-primary-orange rounded hover:bg-primary-orange/10 focus-ring">
+            Ajouter une mise à jour
+          </button>
+        </section>
+        <section>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-section-title text-neutral-text">Tâches</h4>
+            <button type="button" onClick={onAddTache} className="text-caption font-medium text-primary-orange hover:underline focus-ring">Créer une tâche</button>
           </div>
-          <div>
-            <label className={labelClass}>Adresse *</label>
-            <input
-              type="text"
-              className={inputClass}
-              value={adresse}
-              onChange={(e) => setAdresse(e.target.value)}
-              placeholder="Adresse complète du chantier"
-            />
-            {errors.adresse && (
-              <p className="text-caption-xs text-red-600 mt-0.5">
-                {errors.adresse}
-              </p>
-            )}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Client</label>
-              <input
-                type="text"
-                className={inputClass}
-                value={client}
-                onChange={(e) => setClient(e.target.value)}
-                placeholder="Nom du client"
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Téléphone</label>
-              <input
-                type="tel"
-                className={inputClass}
-                value={telephone}
-                onChange={(e) => setTelephone(e.target.value)}
-                placeholder="(514) 000-0000"
-              />
-            </div>
-          </div>
-          <div>
-            <label className={labelClass}>Statut</label>
-            <select
-              className={inputClass}
-              value={statut}
-              onChange={(e) => setStatut(e.target.value as StatutChantier)}
-            >
-              {(Object.keys(STATUT_LABELS) as StatutChantier[]).map((s) => (
-                <option key={s} value={s}>
-                  {STATUT_LABELS[s]}
-                </option>
+          {taches.length === 0 ? (
+            <EmptyInline icon={ClipboardList} message="Aucune tâche." />
+          ) : (
+            <ul className="space-y-1.5">
+              {taches.slice(0, 5).map((t) => (
+                <li key={t.id} className="flex items-center gap-2 py-1.5 px-2 border border-neutral-border rounded text-caption">
+                  <span className="inline-flex px-1.5 py-0.5 rounded text-caption-xs bg-neutral-bg-subtle">{t.statut}</span>
+                  <span className="truncate text-neutral-text">{t.titre}</span>
+                </li>
               ))}
-            </select>
+              {taches.length > 5 && <p className="text-caption-xs text-neutral-text-secondary">+{taches.length - 5} autres</p>}
+            </ul>
+          )}
+        </section>
+        <section>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-section-title text-neutral-text">Photos</h4>
+            <button type="button" onClick={onAddPhoto} className="text-caption font-medium text-primary-orange hover:underline focus-ring">Ajouter une photo</button>
           </div>
-          <div>
-            <label className={labelClass}>Chef d&apos;équipe</label>
-            <input
-              type="text"
-              className={inputClass}
-              value={chefEquipe}
-              onChange={(e) => setChefEquipe(e.target.value)}
-              placeholder="Nom du chef d'équipe"
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Date de début</label>
-              <input
-                type="date"
-                className={inputClass}
-                value={dateDebut}
-                onChange={(e) => setDateDebut(e.target.value)}
-              />
+          {photos.length === 0 ? (
+            <EmptyInline icon={Image} message="Aucune photo." />
+          ) : (
+            <div className="grid grid-cols-3 gap-1.5">
+              {photos.slice(0, 6).map((ph) => (
+                <div key={ph.id} className="aspect-square rounded border border-neutral-border bg-neutral-bg-subtle overflow-hidden">
+                  {ph.url ? <img src={ph.url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Image size={20} className="text-neutral-text-secondary" /></div>}
+                </div>
+              ))}
             </div>
-            <div>
-              <label className={labelClass}>Date de fin prévue</label>
-              <input
-                type="date"
-                className={inputClass}
-                value={dateFinPrevue}
-                onChange={(e) => setDateFinPrevue(e.target.value)}
-              />
-            </div>
-          </div>
-          <div>
-            <label className={labelClass}>Notes</label>
-            <textarea
-              className={inputClass + " min-h-[80px] resize-y"}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Notes internes..."
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-2 shrink-0">
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-9 px-3.5 text-caption font-medium text-neutral-text bg-neutral-bg-subtle border border-neutral-border rounded hover:bg-neutral-bg-active focus-ring"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="h-9 px-3.5 text-caption font-medium text-white bg-primary-orange border border-primary-orange rounded hover:opacity-90 focus-ring"
-            >
-              {isEdit ? "Enregistrer" : "Créer"}
-            </button>
-          </div>
-        </form>
+          )}
+        </section>
+        <section>
+          <h4 className="text-section-title text-neutral-text mb-2">Activité</h4>
+          {avancements.length === 0 ? (
+            <EmptyInline icon={Activity} message="Aucune activité." />
+          ) : (
+            <ul className="space-y-2">
+              {avancements.slice(0, 5).map((a, i) => (
+                <li key={i} className="py-1.5 px-2 border-l-2 border-primary-orange/30 pl-3 text-caption">
+                  <p className="text-neutral-text">{a.resume}</p>
+                  <p className="text-caption-xs text-neutral-text-secondary">{formatDate(a.date)}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </div>
   );
 }
 
-export default function AccueilChantiersPage() {
-  const [chantiers, setChantiers] = useState<Chantier[]>([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Chantier | null>(null);
-  const [filtreStatut, setFiltreStatut] = useState<StatutChantier | "">("");
-  const [recherche, setRecherche] = useState("");
+export default function ChantiersPage() {
+  const { projets, createProject, updateProject, selectedId, selectedProject, setSelectedProjectId, getById } = useProjectsStore();
+  const { byProjet: getAvancementsByProjet } = useAvancements();
+  const { employes } = useEmployes();
 
-  useEffect(() => {
-    setChantiers(loadChantiers());
-  }, []);
+  const [search, setSearch] = useState("");
+  const [filtreStatut, setFiltreStatut] = useState<StatutProjet | "">("");
+  const [filtrePriorite, setFiltrePriorite] = useState<PrioriteProjet | "">("");
+  const [view, setView] = useState<"table" | "kanban" | "calendrier">("table");
+  const [modalNewOpen, setModalNewOpen] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
 
-  const filtered = useMemo(() => {
-    let list = chantiers;
-    if (filtreStatut) {
-      list = list.filter((c) => c.statut === filtreStatut);
-    }
-    if (recherche.trim()) {
-      const q = recherche.trim().toLowerCase();
-      list = list.filter(
-        (c) =>
-          c.nom.toLowerCase().includes(q) ||
-          c.adresse.toLowerCase().includes(q) ||
-          c.client.toLowerCase().includes(q) ||
-          c.chefEquipe.toLowerCase().includes(q)
-      );
-    }
-    return list.sort(
-      (a, b) =>
-        new Date(b.derniereMaj).getTime() - new Date(a.derniereMaj).getTime()
-    );
-  }, [chantiers, filtreStatut, recherche]);
+  const filters: ProjectsFilters = { search, statut: filtreStatut || undefined, priorite: filtrePriorite || undefined };
+  const filtered = useFilteredProjects(projets, filters);
 
-  const handleSave = (data: Omit<Chantier, "id" | "derniereMaj">) => {
-    const now = new Date().toISOString();
-    if (editing) {
-      setChantiers((prev) => {
-        const next = prev.map((c) =>
-          c.id === editing.id
-            ? { ...c, ...data, derniereMaj: now }
-            : c
-        );
-        saveChantiers(next);
-        return next;
-      });
-    } else {
-      const nouveau: Chantier = {
-        id: crypto.randomUUID(),
-        ...data,
-        derniereMaj: now,
-      };
-      setChantiers((prev) => {
-        const next = [nouveau, ...prev];
-        saveChantiers(next);
-        return next;
-      });
-    }
-    setEditing(null);
-    setModalOpen(false);
+  const avancementsForSelected = selectedId ? getAvancementsByProjet(selectedId) : [];
+
+  const handleCreate = (p: Parameters<typeof createProject>[0]) => {
+    createProject(p);
+    setModalNewOpen(false);
   };
 
-  const handleDelete = () => {
-    if (!editing) return;
-    if (typeof window !== "undefined" && !window.confirm("Supprimer ce chantier ?")) return;
-    setChantiers((prev) => {
-      const next = prev.filter((c) => c.id !== editing.id);
-      saveChantiers(next);
-      return next;
+  // Calendrier: events = projets avec dateDebut dans le mois
+  const calendarEvents = useMemo(() => {
+    const y = calendarMonth.getFullYear();
+    const m = calendarMonth.getMonth();
+    return projets.filter((p) => {
+      if (!p.dateDebut) return false;
+      const d = new Date(p.dateDebut);
+      return d.getFullYear() === y && d.getMonth() === m;
     });
-    setEditing(null);
-    setModalOpen(false);
-  };
+  }, [projets, calendarMonth]);
 
-  const handleDeleteById = (id: string) => {
-    if (typeof window !== "undefined" && !window.confirm("Supprimer ce chantier ?")) return;
-    setChantiers((prev) => {
-      const next = prev.filter((c) => c.id !== id);
-      saveChantiers(next);
-      return next;
-    });
-  };
-
-  const openNew = () => {
-    setEditing(null);
-    setModalOpen(true);
-  };
-
-  const openEdit = (c: Chantier) => {
-    setEditing(c);
-    setModalOpen(true);
-  };
+  const firstDay = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+  const lastDay = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0);
+  const startPad = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+  const daysInMonth = lastDay.getDate();
 
   return (
-    <div className="p-6">
-      <PageHeader
-        title="Chantiers"
-        subtitle="Gérez vos chantiers : ajout, suivi et mise à jour."
-      />
+    <div className="px-6 py-6 max-w-[1180px] mx-auto">
+      <PageHeader title="Chantiers" subtitle="Pilotage des projets, tâches, photos et avancement." />
 
-      <SectionCard
-        title="Liste des chantiers"
-        description="Recherche et filtre par statut"
-        actions={
-          <button
-            type="button"
-            onClick={openNew}
-            className="flex items-center gap-1.5 h-9 px-3.5 text-caption font-medium text-white bg-primary-orange rounded hover:opacity-90 focus-ring"
-          >
-            <Plus size={18} /> Nouveau chantier
-          </button>
-        }
-      >
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="relative flex-1">
-            <Search
-              size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-text-secondary pointer-events-none"
-            />
-            <input
-              type="search"
-              placeholder="Rechercher (nom, adresse, client, chef)..."
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-              className={inputClass + " pl-9"}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Filter size={18} className="text-neutral-text-secondary shrink-0" />
-            <select
-              value={filtreStatut}
-              onChange={(e) =>
-                setFiltreStatut((e.target.value || "") as StatutChantier | "")
-              }
-              className={inputClass + " w-auto min-w-[140px]"}
-            >
-              <option value="">Tous les statuts</option>
-              {(Object.keys(STATUT_LABELS) as StatutChantier[]).map((s) => (
-                <option key={s} value={s}>
-                  {STATUT_LABELS[s]}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-text-secondary pointer-events-none" />
+          <input type="search" className={inputClass + " pl-9"} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un chantier..." />
         </div>
+        <select className={inputClass + " w-auto min-w-[120px]"} value={filtreStatut} onChange={(e) => setFiltreStatut(e.target.value as StatutProjet | "")}>
+          <option value="">Tous les statuts</option>
+          {STATUTS.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select className={inputClass + " w-auto min-w-[100px]"} value={filtrePriorite} onChange={(e) => setFiltrePriorite(e.target.value as PrioriteProjet | "")}>
+          <option value="">Priorité</option>
+          {PRIORITES.map((p) => <option key={p} value={p}>{p}</option>)}
+        </select>
+        <button type="button" onClick={() => setModalNewOpen(true)} className="h-9 px-3.5 text-caption font-medium text-white bg-primary-orange rounded hover:opacity-90 focus-ring flex items-center gap-1.5">
+          <Plus size={18} strokeWidth={1.7} /> Nouveau chantier
+        </button>
+        <button type="button" disabled title="Bientôt disponible" className="h-9 px-3.5 text-caption font-medium text-neutral-text bg-neutral-bg-subtle border border-neutral-border rounded opacity-60 cursor-not-allowed flex items-center gap-1.5">
+          <Download size={18} strokeWidth={1.7} /> Exporter
+        </button>
+      </div>
 
-        {filtered.length === 0 ? (
-          <EmptyState
-            icon={MapPin}
-            title={chantiers.length === 0 ? "Aucun chantier" : "Aucun résultat"}
-            description={
-              chantiers.length === 0
-                ? "Ajoutez un chantier pour commencer le suivi."
-                : "Modifiez la recherche ou le filtre pour voir d'autres chantiers."
-            }
-            cta={
-              chantiers.length === 0 ? (
-                <button
-                  type="button"
-                  onClick={openNew}
-                  className="flex items-center gap-1.5 h-9 px-3.5 text-caption font-medium text-white bg-primary-orange rounded hover:opacity-90 focus-ring"
-                >
-                  <Plus size={18} /> Ajouter un chantier
+      <div className="flex border-b border-neutral-border mb-3">
+        {(["table", "kanban", "calendrier"] as const).map((v) => (
+          <button key={v} type="button" onClick={() => setView(v)} className={`px-4 py-2.5 text-caption font-medium border-b-2 -mb-px focus-ring ${view === v ? "border-primary-blue text-primary-blue" : "border-transparent text-neutral-text-secondary hover:text-neutral-text"}`}>
+            {v === "table" && <List size={16} className="inline-block mr-1.5 align-middle" strokeWidth={1.7} />}
+            {v === "kanban" && <LayoutGrid size={16} className="inline-block mr-1.5 align-middle" strokeWidth={1.7} />}
+            {v === "calendrier" && <Calendar size={16} className="inline-block mr-1.5 align-middle" strokeWidth={1.7} />}
+            {v === "table" ? "Table" : v === "kanban" ? "Kanban" : "Calendrier"}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-0 min-h-[480px]" style={{ maxHeight: "calc(100vh - 280px)" }}>
+        <div className="w-[65%] flex flex-col min-w-0 border border-neutral-border rounded-l overflow-hidden bg-neutral-white">
+          {filtered.length === 0 ? (
+            <div className="flex-1 flex items-center gap-4 p-6">
+              <MapPin size={24} className="text-neutral-text-secondary shrink-0" strokeWidth={1.7} />
+              <div>
+                <p className="font-medium text-neutral-text">Aucun chantier</p>
+                <p className="text-caption text-neutral-text-secondary">Créez un chantier pour commencer.</p>
+                <button type="button" onClick={() => setModalNewOpen(true)} className="mt-2 h-9 px-3.5 text-caption font-medium text-white bg-primary-orange rounded hover:opacity-90 focus-ring">
+                  Créer un chantier
                 </button>
-              ) : undefined
-            }
-          />
-        ) : (
-          <TableShell columns={columns}>
-            {filtered.map((c) => (
-              <tr
-                key={c.id}
-                className="border-b border-neutral-border hover:bg-neutral-bg-subtle transition-colors"
+              </div>
+            </div>
+          ) : view === "table" ? (
+            <div className="overflow-auto flex-1">
+              <Table
+                columns={[
+                  { key: "chantier", label: "Chantier" },
+                  { key: "statut", label: "Statut" },
+                  { key: "avancement", label: "Avancement" },
+                  { key: "etape", label: "Prochaine étape" },
+                  { key: "maj", label: "Mise à jour" },
+                  { key: "actions", label: "", className: "w-[40px]" },
+                ]}
               >
-                <td className="py-3 px-4 font-medium text-neutral-text">
-                  {c.nom || "—"}
-                </td>
-                <td className="py-3 px-4 text-caption text-neutral-text-secondary">
-                  {c.adresse || "—"}
-                </td>
-                <td className="py-3 px-4 text-caption text-neutral-text-secondary">
-                  {c.client || "—"}
-                </td>
-                <td className="py-3 px-4">
-                  <span
-                    className={
-                      "inline-flex px-2 py-0.5 rounded text-caption-xs font-medium " +
-                      STATUT_STYLE[c.statut]
-                    }
-                  >
-                    {STATUT_LABELS[c.statut]}
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-caption text-neutral-text-secondary">
-                  {c.chefEquipe || "—"}
-                </td>
-                <td className="py-3 px-4 text-caption text-neutral-text-secondary">
-                  {formatDate(c.derniereMaj)}
-                </td>
-                <td className="py-3 px-4">
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => openEdit(c)}
-                      className="p-2 rounded text-neutral-text-secondary hover:bg-neutral-border hover:text-neutral-text focus-ring"
-                      aria-label="Modifier"
+                {filtered.map((p) => {
+                  const avancement = getAvancementPourcent(p);
+                  return (
+                    <tr
+                      key={p.id}
+                      className={`border-b border-neutral-border hover:bg-neutral-bg-subtle cursor-pointer ${selectedId === p.id ? "bg-primary-blue/5" : ""}`}
+                      onClick={() => setSelectedProjectId(p.id)}
                     >
-                      <Pencil size={16} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteById(c.id)}
-                      className="p-2 rounded text-neutral-text-secondary hover:bg-neutral-border hover:text-red-600 focus-ring"
-                      aria-label="Supprimer"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                      <td className="py-2.5 px-4">
+                        <p className="font-medium text-neutral-text">{p.titre}</p>
+                        {p.adresse && <p className="text-caption-xs text-neutral-text-secondary truncate max-w-[200px]">{p.adresse}</p>}
+                      </td>
+                      <td className="py-2.5 px-4">
+                        <span className="inline-flex px-2 py-0.5 rounded text-caption-xs font-medium bg-neutral-bg-subtle text-neutral-text">{p.statut}</span>
+                      </td>
+                      <td className="py-2.5 px-4 text-caption">{avancement != null ? `${avancement} %` : "—"}</td>
+                      <td className="py-2.5 px-4 text-caption text-neutral-text-secondary truncate max-w-[140px]">{getProchaineEtape(p)}</td>
+                      <td className="py-2.5 px-4 text-caption text-neutral-text-secondary">{formatDate(p.derniereMaj)}</td>
+                      <td className="py-2.5 px-4" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" className="p-2 rounded hover:bg-neutral-bg-active focus-ring" aria-label="Actions"><MoreVertical size={16} strokeWidth={1.7} /></button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </Table>
+            </div>
+          ) : view === "kanban" ? (
+            <div className="overflow-auto flex-1 p-3">
+              <div className="flex gap-3 min-w-max">
+                {STATUTS.map((statut) => {
+                  const colProjects = filtered.filter((p) => p.statut === statut);
+                  return (
+                    <div key={statut} className="w-[220px] shrink-0 flex flex-col rounded border border-neutral-border bg-neutral-bg-subtle/50">
+                      <div className="px-3 py-2 border-b border-neutral-border">
+                        <h4 className="text-section-title text-neutral-text">{statut}</h4>
+                        <span className="text-caption-xs text-neutral-text-secondary">{colProjects.length}</span>
+                      </div>
+                      <div className="p-2 flex-1 space-y-2 min-h-[200px]">
+                        {colProjects.length === 0 ? (
+                          <p className="text-caption-xs text-neutral-text-secondary py-4 text-center">Aucun</p>
+                        ) : (
+                          colProjects.map((p) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => setSelectedProjectId(p.id)}
+                              className={`w-full text-left p-2.5 rounded border border-neutral-border bg-neutral-white hover:bg-neutral-bg-subtle focus-ring ${selectedId === p.id ? "ring-2 ring-primary-blue/20" : ""}`}
+                            >
+                              <p className="font-medium text-neutral-text text-caption truncate">{p.titre}</p>
+                              {p.adresse && <p className="text-caption-xs text-neutral-text-secondary truncate mt-0.5">{p.adresse}</p>}
+                              <p className="text-caption-xs text-neutral-text-secondary mt-1">{getProchaineEtape(p)}</p>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-auto flex-1 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <button type="button" onClick={() => setCalendarMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1))} className="p-2 rounded hover:bg-neutral-bg-subtle focus-ring">←</button>
+                <span className="text-caption font-medium">{MONTHS[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}</span>
+                <button type="button" onClick={() => setCalendarMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1))} className="p-2 rounded hover:bg-neutral-bg-subtle focus-ring">→</button>
+              </div>
+              <div className="grid grid-cols-7 border border-neutral-border rounded text-caption">
+                {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((d) => (
+                  <div key={d} className="py-2 text-center font-medium text-neutral-text-secondary border-b border-r border-neutral-border last:border-r-0 bg-neutral-bg-subtle">
+                    {d}
                   </div>
-                </td>
-              </tr>
-            ))}
-          </TableShell>
-        )}
-      </SectionCard>
+                ))}
+                {Array.from({ length: startPad }, (_, i) => (
+                  <div key={`pad-${i}`} className="min-h-[60px] border-r border-b border-neutral-border last:border-r-0 bg-neutral-bg-subtle/50" />
+                ))}
+                {Array.from({ length: daysInMonth }, (_, i) => {
+                  const day = i + 1;
+                  const dayDate = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), day);
+                  const dayStr = dayDate.toISOString().slice(0, 10);
+                  const dayEvents = calendarEvents.filter((p) => p.dateDebut?.slice(0, 10) === dayStr);
+                  return (
+                    <div key={day} className="min-h-[60px] p-1 border-r border-b border-neutral-border last:border-r-0">
+                      <span className="text-caption-xs text-neutral-text-secondary">{day}</span>
+                      {dayEvents.length === 0 ? (
+                        <p className="text-caption-xs text-neutral-text-secondary mt-1">—</p>
+                      ) : (
+                        <ul className="mt-1 space-y-0.5">
+                          {dayEvents.slice(0, 2).map((p) => (
+                            <li key={p.id}>
+                              <button type="button" onClick={() => setSelectedProjectId(p.id)} className="text-left text-caption-xs text-primary-blue hover:underline truncate block w-full">
+                                {p.titre}
+                              </button>
+                            </li>
+                          ))}
+                          {dayEvents.length > 2 && <span className="text-caption-xs text-neutral-text-secondary">+{dayEvents.length - 2}</span>}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+                {Array.from({ length: (7 - ((startPad + daysInMonth) % 7)) % 7 }, (_, i) => (
+                  <div key={`end-${i}`} className="min-h-[60px] border-r border-b border-neutral-border last:border-r-0 bg-neutral-bg-subtle/30" />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="w-[35%] min-w-0 flex flex-col bg-neutral-white" style={{ minHeight: "400px" }}>
+          <DetailPanel
+            project={selectedProject}
+            onOpenEdit={() => selectedProject && (window.location.href = `/patron/projets/${selectedProject.id}`)}
+            onAddAvancement={() => selectedProject && (window.location.href = `/employes/avancement`)}
+            onAddTache={() => selectedProject && (window.location.href = `/patron/projets/${selectedProject.id}`)}
+            onAddPhoto={() => selectedProject && (window.location.href = `/patron/projets/${selectedProject.id}`)}
+            avancements={avancementsForSelected.map((a) => ({ date: a.date, resume: a.resume }))}
+          />
+        </div>
+      </div>
 
-      <ChantierModal
-        open={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setEditing(null);
-        }}
-        chantier={editing}
-        onSave={handleSave}
-        onDelete={editing ? handleDelete : undefined}
+      <NewChantierModal
+        open={modalNewOpen}
+        onClose={() => setModalNewOpen(false)}
+        onCreate={handleCreate}
+        employes={employes.map((e) => ({ id: e.id, nom: e.nom }))}
       />
     </div>
   );
