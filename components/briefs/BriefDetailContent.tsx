@@ -97,7 +97,9 @@ export function BriefDetailContent({
                   value={brief.assignes?.[0]?.id ?? ""}
                   onChange={(e) => {
                     const emp = employes.find((x) => x.id === e.target.value);
-                    onUpdate({ assignes: emp ? [{ id: emp.id, nom: emp.nom }] } : undefined });
+                    onUpdate({
+                      assignes: emp ? [{ id: emp.id, nom: emp.nom }] : [],
+                    });
                   }}
                 >
                   <option value="">—</option>
