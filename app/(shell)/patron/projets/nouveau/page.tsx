@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { Field } from "@/components/ui/Field";
-import { useProjets } from "@/lib/store";
+import { createProjectAction } from "@/app/actions/data";
 import type { StatutProjet } from "@/types/projet";
 import { ArrowLeft } from "lucide-react";
 
@@ -16,7 +16,6 @@ const inputClass =
 
 export default function NouveauProjetPage() {
   const router = useRouter();
-  const { add } = useProjets();
   const [titre, setTitre] = useState("");
   const [adresse, setAdresse] = useState("");
   const [statut, setStatut] = useState<StatutProjet>("À planifier");
@@ -24,22 +23,29 @@ export default function NouveauProjetPage() {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!titre.trim()) {
       setError("Le titre est requis.");
       return;
     }
-    const id = add({
-      titre: titre.trim(),
-      adresse: adresse.trim() || undefined,
-      statut,
-      description: description.trim() || undefined,
-      dateDebut: dateDebut || undefined,
-      dateFin: dateFin || undefined,
+    setSaving(true);
+    const result = await createProjectAction({
+      title: titre.trim(),
+      address: adresse.trim() || null,
+      status: statut,
+      description: description.trim() || null,
+      start_date: dateDebut || null,
+      end_date: dateFin || null,
     });
-    router.push(`/patron/projets/${id}`);
+    setSaving(false);
+    if (result.success && result.id) {
+      router.push(`/patron/projets/${result.id}`);
+    } else if (!result.success) {
+      setError(result.error);
+    }
   };
 
   return (
@@ -77,9 +83,7 @@ export default function NouveauProjetPage() {
           </Field>
           <Field label="Statut">
             <select className={inputClass} value={statut} onChange={(e) => setStatut(e.target.value as StatutProjet)}>
-              {STATUTS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
+              {STATUTS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </Field>
           <Field label="Date de début">
@@ -105,7 +109,8 @@ export default function NouveauProjetPage() {
             </Link>
             <button
               type="submit"
-              className="h-9 px-3.5 text-caption font-medium text-white bg-primary-orange rounded hover:opacity-90 focus-ring"
+              disabled={saving}
+              className="h-9 px-3.5 text-caption font-medium text-white bg-primary-orange rounded hover:opacity-90 focus-ring disabled:opacity-50"
             >
               Créer le projet
             </button>

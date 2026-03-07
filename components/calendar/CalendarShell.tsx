@@ -11,6 +11,11 @@ import { EventModal } from "./EventModal";
 
 interface CalendarShellProps {
   projets?: Projet[];
+  /** When provided, events come from server and add/update/delete use the callbacks. */
+  initialEvents?: CalendarEvent[];
+  onAddEvent?: (event: Omit<CalendarEvent, "id">) => void | Promise<void>;
+  onUpdateEvent?: (id: string, payload: Partial<CalendarEvent>) => void | Promise<void>;
+  onDeleteEvent?: (id: string) => void | Promise<void>;
 }
 
 const STORAGE_KEY = "peinture-agenda-events";
@@ -36,35 +41,63 @@ function saveEvents(events: CalendarEvent[]) {
   }
 }
 
-export function CalendarShell({ projets = [] }: CalendarShellProps) {
-  const [events, setEvents] = useState<CalendarEvent[]>(loadEvents);
+export function CalendarShell({ projets = [], initialEvents, onAddEvent, onUpdateEvent, onDeleteEvent }: CalendarShellProps) {
+  const [localEvents, setLocalEvents] = useState<CalendarEvent[]>(loadEvents);
+  const events = initialEvents !== undefined ? initialEvents : localEvents;
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
   useEffect(() => {
-    saveEvents(events);
-  }, [events]);
+    if (initialEvents === undefined) saveEvents(localEvents);
+  }, [localEvents, initialEvents]);
 
-  const addEvent = useCallback((event: Omit<CalendarEvent, "id">) => {
-    const id = `ev-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    setEvents((prev) => [...prev, { ...event, id }]);
-    setModalOpen(false);
-    setEditingEvent(null);
-  }, []);
+  const addEvent = useCallback(
+    (event: Omit<CalendarEvent, "id">) => {
+      if (onAddEvent) {
+        void onAddEvent(event);
+        setModalOpen(false);
+        setEditingEvent(null);
+        return;
+      }
+      const id = `ev-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      setLocalEvents((prev) => [...prev, { ...event, id }]);
+      setModalOpen(false);
+      setEditingEvent(null);
+    },
+    [onAddEvent]
+  );
 
-  const updateEvent = useCallback((id: string, payload: Partial<CalendarEvent>) => {
-    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, ...payload } : e)));
-    setModalOpen(false);
-    setEditingEvent(null);
-  }, []);
+  const updateEvent = useCallback(
+    (id: string, payload: Partial<CalendarEvent>) => {
+      if (onUpdateEvent) {
+        void onUpdateEvent(id, payload);
+        setModalOpen(false);
+        setEditingEvent(null);
+        return;
+      }
+      setLocalEvents((prev) => prev.map((e) => (e.id === id ? { ...e, ...payload } : e)));
+      setModalOpen(false);
+      setEditingEvent(null);
+    },
+    [onUpdateEvent]
+  );
 
-  const deleteEvent = useCallback((id: string) => {
-    setEvents((prev) => prev.filter((e) => e.id !== id));
-    setModalOpen(false);
-    setEditingEvent(null);
-  }, []);
+  const deleteEvent = useCallback(
+    (id: string) => {
+      if (onDeleteEvent) {
+        void onDeleteEvent(id);
+        setModalOpen(false);
+        setEditingEvent(null);
+        return;
+      }
+      setLocalEvents((prev) => prev.filter((e) => e.id !== id));
+      setModalOpen(false);
+      setEditingEvent(null);
+    },
+    [onDeleteEvent]
+  );
 
   const openNewEvent = useCallback((start?: Date) => {
     if (start) {

@@ -1,31 +1,14 @@
 import { PageHeader } from "@/components/PageHeader";
-import { SectionCard } from "@/components/SectionCard";
-import { TableShell } from "@/components/TableShell";
-import { EmptyState } from "@/components/EmptyState";
-import { Users } from "lucide-react";
+import { listEmployees } from "@/lib/db/employees";
+import { EmployesListeClient } from "./EmployesListeClient";
 
-const columns = ["Nom", "Poste", "Téléphone", "Statut", "Chantier actuel"];
+export default async function EmployesListePage() {
+  const employees = await listEmployees(false);
 
-export default function EmployesListePage() {
   return (
     <div className="p-6">
-      <PageHeader
-        title="Liste des employés"
-        subtitle="Effectif et statut actuel."
-      />
-      <SectionCard title="Effectif">
-        <TableShell columns={columns}>
-          <tr>
-            <td colSpan={columns.length} className="p-0">
-              <EmptyState
-                icon={Users}
-                title="Aucune donnée"
-                description="La liste des employés apparaîtra ici lorsque le système sera connecté."
-              />
-            </td>
-          </tr>
-        </TableShell>
-      </SectionCard>
+      <PageHeader title="Liste des employés" subtitle="Effectif et statut actuel." />
+      <EmployesListeClient initialEmployees={employees} />
     </div>
   );
 }
