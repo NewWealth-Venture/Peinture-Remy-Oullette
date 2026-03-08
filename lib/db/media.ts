@@ -45,6 +45,27 @@ export async function createMediaFile(p: {
   return data.id;
 }
 
+export async function listRecentProjectPhotos(limit = 12): Promise<DbMediaFile[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("media_files")
+    .select("*")
+    .eq("entity_type", "project_photo")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map(row => ({
+    id: row.id,
+    entity_type: row.entity_type,
+    entity_id: row.entity_id,
+    media_type: row.media_type,
+    bucket_path: row.bucket_path,
+    file_name: row.file_name ?? null,
+    description: row.description ?? null,
+    created_at: row.created_at,
+  }));
+}
+
 export async function listMediaByEntity(entityType: MediaEntityType, entityId: string): Promise<DbMediaFile[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
