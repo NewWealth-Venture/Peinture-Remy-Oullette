@@ -68,10 +68,12 @@ export async function runAssistant(input: AssistantInput): Promise<AssistantOutp
     if (finishReason === "tool_calls" && message.tool_calls?.length) {
       messages.push(message as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam);
       for (const tc of message.tool_calls) {
-        const name = tc.function.name as ToolName;
+        const fn = "function" in tc ? tc.function : null;
+        if (!fn) continue;
+        const name = fn.name as ToolName;
         const args = (() => {
           try {
-            return JSON.parse(tc.function.arguments ?? "{}") as Record<string, unknown>;
+            return JSON.parse(fn.arguments ?? "{}") as Record<string, unknown>;
           } catch {
             return {};
           }

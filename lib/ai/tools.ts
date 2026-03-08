@@ -1,6 +1,6 @@
 import type { ChatCompletionTool } from "openai/resources/chat/completions";
 
-export const ASSISTANT_TOOLS: ChatCompletionTool[] = [
+const TOOLS: ChatCompletionTool[] = [
   {
     type: "function",
     function: {
@@ -166,7 +166,10 @@ export const ASSISTANT_TOOLS: ChatCompletionTool[] = [
         required: ["projectId"],
       },
     },
+  },
 ];
+
+export const ASSISTANT_TOOLS = TOOLS;
 
 export type ToolName =
   | "getProjects"
