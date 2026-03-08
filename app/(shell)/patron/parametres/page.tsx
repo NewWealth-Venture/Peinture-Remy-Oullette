@@ -1,7 +1,8 @@
+import Image from "next/image";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
 import { EmptyState } from "@/components/EmptyState";
-import { Building2, Users, Settings } from "lucide-react";
+import { Users, Settings } from "lucide-react";
 
 export default function PatronParametresPage() {
   return (
@@ -16,8 +17,8 @@ export default function PatronParametresPage() {
           description="Nom, logo (lecture seule pour l'instant)"
         >
           <div className="flex items-center gap-4 py-2">
-            <div className="h-10 w-10 rounded bg-primary-blue flex items-center justify-center text-white font-heading font-semibold text-caption">
-              PR
+            <div className="h-10 w-10 rounded overflow-hidden relative shrink-0 bg-neutral-bg-subtle flex items-center justify-center">
+              <Image src="/logo.png" alt="Logo" width={40} height={40} className="object-contain" />
             </div>
             <div>
               <p className="font-medium text-neutral-text">PEINTURE RÉMY OUELLETTE</p>

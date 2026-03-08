@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
 import {
@@ -128,11 +129,8 @@ export function SidebarNav() {
           className="flex items-center gap-2.5 focus-ring rounded px-2 py-1.5 -mx-0.5"
           aria-label="Accueil"
         >
-          <div
-            className="h-7 w-7 shrink-0 rounded-md bg-primary-blue flex items-center justify-center text-white font-heading font-semibold text-caption-xs"
-            aria-hidden
-          >
-            PR
+          <div className="h-7 w-7 shrink-0 rounded-md overflow-hidden relative bg-neutral-bg-subtle flex items-center justify-center" aria-hidden>
+            <Image src="/logo.png" alt="" width={28} height={28} className="object-contain" />
           </div>
           <span className="font-heading font-semibold text-primary-blue text-[13px] leading-tight truncate">
             Peinture Rémy Ouellette
