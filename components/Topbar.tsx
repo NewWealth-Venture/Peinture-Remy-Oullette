@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { AssistantTriggerButton } from "@/components/assistant/AssistantTriggerButton";
 
 const breadcrumbMap: Record<string, { category: string; page: string }> = {
   "/accueil/overview": { category: "Dashboard", page: "Vue d'ensemble" },
@@ -78,7 +79,8 @@ export function Topbar() {
         />
       </div>
 
-      <div className="flex items-center gap-4 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
+        <AssistantTriggerButton />
         <time
           className="text-caption text-neutral-text-secondary"
           dateTime={new Date().toISOString().slice(0, 10)}
