@@ -36,8 +36,7 @@ const config: Config = {
         "caption-xs": ["12px", { lineHeight: "1.4", fontWeight: "400" }],
       },
       spacing: {
-        "sidebar-rail": "64px",
-        "sidebar-panel": "240px",
+        sidebar: "260px",
         topbar: "56px",
       },
       borderRadius: {

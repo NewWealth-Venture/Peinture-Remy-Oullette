@@ -4,22 +4,32 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const breadcrumbMap: Record<string, { category: string; page: string }> = {
-  "/accueil/overview": { category: "Accueil", page: "Vue d'ensemble" },
-  "/accueil/agenda": { category: "Accueil", page: "Agenda & planification" },
-  "/accueil/chantiers": { category: "Accueil", page: "Chantiers" },
-  "/accueil/annonces": { category: "Accueil", page: "Annonces" },
-  "/employes/liste": { category: "Employés", page: "Liste" },
-  "/employes/pointage": { category: "Employés", page: "Pointage" },
-  "/employes/affectations": { category: "Employés", page: "Affectations" },
-  "/employes/demandes": { category: "Employés", page: "Demandes" },
-  "/patron/centre": { category: "Patron", page: "Centre" },
-  "/patron/rapports": { category: "Patron", page: "Rapports" },
-  "/patron/finances": { category: "Patron", page: "Finances" },
-  "/patron/parametres": { category: "Patron", page: "Paramètres" },
+  "/accueil/overview": { category: "Dashboard", page: "Vue d'ensemble" },
+  "/accueil/agenda": { category: "Agenda", page: "Planification" },
+  "/accueil/chantiers": { category: "Chantiers", page: "Projets" },
+  "/accueil/estime": { category: "Chantiers", page: "Estimés" },
+  "/accueil/annonces": { category: "Communication", page: "Annonces" },
+  "/employes/liste": { category: "Équipe", page: "Employés" },
+  "/employes/pointage": { category: "Équipe", page: "Pointage" },
+  "/employes/affectations": { category: "Équipe", page: "Affectations" },
+  "/employes/avancement": { category: "Équipe", page: "Avancement quotidien" },
+  "/employes/materiel": { category: "Matériel", page: "Matériel utilisé" },
+  "/employes/demandes": { category: "Équipe", page: "Demandes" },
+  "/patron/centre": { category: "Dashboard", page: "Centre" },
+  "/patron/rapports": { category: "Dashboard", page: "Rapports" },
+  "/patron/projets": { category: "Chantiers", page: "Projets" },
+  "/patron/inventaire": { category: "Matériel", page: "Inventaire" },
+  "/patron/affectations": { category: "Communication", page: "Brief & instructions" },
+  "/patron/finances": { category: "Finances", page: "Finances" },
+  "/patron/parametres": { category: "Paramètres", page: "Paramètres" },
 };
 
 function getBreadcrumb(pathname: string) {
-  return breadcrumbMap[pathname] ?? { category: "Accueil", page: "Vue d'ensemble" };
+  if (breadcrumbMap[pathname]) return breadcrumbMap[pathname];
+  const sorted = Object.keys(breadcrumbMap).sort((a, b) => b.length - a.length);
+  const match = sorted.find((path) => pathname.startsWith(path + "/"));
+  if (match) return breadcrumbMap[match];
+  return { category: "Dashboard", page: "Vue d'ensemble" };
 }
 
 function formatDate(date: Date): string {

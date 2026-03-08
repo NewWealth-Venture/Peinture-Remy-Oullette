@@ -2,183 +2,210 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
 import {
   LayoutDashboard,
   Calendar,
-  MapPin,
-  Megaphone,
-  Calculator,
+  FolderKanban,
   Users,
-  Clock,
-  UserPlus,
-  FileQuestion,
-  Gauge,
-  FileText,
+  Package,
+  Megaphone,
   Banknote,
   Settings,
-  FolderKanban,
-  Package,
-  TrendingUp,
-  ClipboardList,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-type NavItem = { href: string; label: string; icon: LucideIcon };
-type NavCategory = { id: string; label: string; icon: LucideIcon; items: NavItem[] };
+type NavItem = { href: string; label: string };
+type NavGroup = { id: string; label: string; icon: LucideIcon; items: NavItem[] };
 
-const categories: NavCategory[] = [
+const SIDEBAR_GROUPS: NavGroup[] = [
   {
-    id: "accueil",
-    label: "Accueil",
+    id: "dashboard",
+    label: "Dashboard",
     icon: LayoutDashboard,
+    items: [{ href: "/accueil/overview", label: "Dashboard" }],
+  },
+  {
+    id: "agenda",
+    label: "Agenda",
+    icon: Calendar,
+    items: [{ href: "/accueil/agenda", label: "Agenda" }],
+  },
+  {
+    id: "chantiers",
+    label: "Chantiers",
+    icon: FolderKanban,
     items: [
-      { href: "/accueil/overview", label: "Vue d'ensemble", icon: LayoutDashboard },
-      { href: "/accueil/agenda", label: "Agenda & planification", icon: Calendar },
-      { href: "/accueil/chantiers", label: "Chantiers / Projets", icon: MapPin },
-      { href: "/accueil/estime", label: "Estimé", icon: Calculator },
-      { href: "/accueil/annonces", label: "Annonces", icon: Megaphone },
+      { href: "/accueil/chantiers", label: "Projets" },
+      { href: "/accueil/estime", label: "Estimés" },
     ],
   },
   {
-    id: "employes",
-    label: "Employés",
+    id: "equipe",
+    label: "Équipe",
     icon: Users,
     items: [
-      { href: "/employes/liste", label: "Liste", icon: Users },
-      { href: "/employes/pointage", label: "Pointage", icon: Clock },
-      { href: "/employes/affectations", label: "Brief & affectations", icon: UserPlus },
-      { href: "/employes/avancement", label: "Avancement quotidien", icon: TrendingUp },
-      { href: "/employes/materiel", label: "Matériel utilisé", icon: Package },
-      { href: "/employes/demandes", label: "Demandes", icon: FileQuestion },
+      { href: "/employes/liste", label: "Employés" },
+      { href: "/employes/affectations", label: "Affectations" },
+      { href: "/employes/avancement", label: "Avancement quotidien" },
     ],
   },
   {
-    id: "patron",
-    label: "Patron",
-    icon: Gauge,
+    id: "materiel",
+    label: "Matériel",
+    icon: Package,
     items: [
-      { href: "/patron/centre", label: "Centre", icon: Gauge },
-      { href: "/patron/rapports", label: "Rapports", icon: FileText },
-      { href: "/patron/projets", label: "Projets", icon: FolderKanban },
-      { href: "/patron/inventaire", label: "Inventaire", icon: ClipboardList },
-      { href: "/patron/affectations", label: "Brief & affectations", icon: UserPlus },
-      { href: "/patron/finances", label: "Finances", icon: Banknote },
-      { href: "/patron/parametres", label: "Paramètres", icon: Settings },
+      { href: "/patron/inventaire", label: "Inventaire" },
+      { href: "/employes/materiel", label: "Matériel utilisé" },
     ],
+  },
+  {
+    id: "communication",
+    label: "Communication",
+    icon: Megaphone,
+    items: [
+      { href: "/patron/affectations", label: "Brief & instructions" },
+      { href: "/accueil/annonces", label: "Annonces" },
+    ],
+  },
+  {
+    id: "finances",
+    label: "Finances",
+    icon: Banknote,
+    items: [{ href: "/patron/finances", label: "Finances" }],
+  },
+  {
+    id: "parametres",
+    label: "Paramètres",
+    icon: Settings,
+    items: [{ href: "/patron/parametres", label: "Paramètres" }],
   },
 ];
 
-function getActiveCategory(pathname: string): string {
-  if (pathname.startsWith("/accueil")) return "accueil";
-  if (pathname.startsWith("/employes")) return "employes";
-  if (pathname.startsWith("/patron")) return "patron";
-  return "accueil";
+const DEFAULT_OPEN_GROUPS = new Set(["dashboard", "chantiers", "equipe", "materiel", "communication"]);
+
+function getGroupIdForPath(pathname: string): string | null {
+  for (const g of SIDEBAR_GROUPS) {
+    if (g.items.some((i) => pathname === i.href || pathname.startsWith(i.href + "/"))) return g.id;
+  }
+  return null;
 }
 
 export function SidebarNav() {
   const pathname = usePathname();
-  const activeCategory = getActiveCategory(pathname);
-  const activeGroup = categories.find((c) => c.id === activeCategory) ?? categories[0];
+  const activeGroupId = useMemo(() => getGroupIdForPath(pathname), [pathname]);
+
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(DEFAULT_OPEN_GROUPS));
+
+  useEffect(() => {
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (activeGroupId) next.add(activeGroupId);
+      return next;
+    });
+  }, [activeGroupId]);
+
+  const toggleGroup = (id: string) => {
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   return (
     <aside
-      className="flex min-h-screen shrink-0 border-r border-neutral-border bg-neutral-white"
+      className="w-sidebar shrink-0 flex flex-col min-h-screen border-r border-neutral-border bg-neutral-white"
       role="navigation"
       aria-label="Menu principal"
     >
-      {/* Rail */}
-      <div
-        className="w-[64px] flex flex-col items-center py-3 border-r border-neutral-border bg-neutral-white"
-        style={{ width: "64px" }}
-      >
-        {categories.map((cat) => {
-          const isActive = activeCategory === cat.id;
-          const Icon = cat.icon;
-          return (
-            <Link
-              key={cat.id}
-              href={cat.items[0].href}
-              className={`
-                relative flex items-center justify-center w-full h-12 rounded transition-colors focus-ring
-                ${isActive ? "bg-neutral-bg-subtle" : "hover:bg-neutral-bg-subtle"}
-              `}
-              aria-current={isActive ? "true" : undefined}
-            >
-              {isActive && (
-                <span
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-primary-orange rounded-r"
-                  aria-hidden
-                />
-              )}
-              <Icon size={20} strokeWidth={1.7} className="text-neutral-text" aria-hidden />
-            </Link>
-          );
-        })}
+      <div className="p-3 border-b border-neutral-border shrink-0">
+        <Link
+          href="/accueil/overview"
+          className="flex items-center gap-2.5 focus-ring rounded px-2 py-1.5 -mx-0.5"
+          aria-label="Accueil"
+        >
+          <div
+            className="h-7 w-7 shrink-0 rounded-md bg-primary-blue flex items-center justify-center text-white font-heading font-semibold text-caption-xs"
+            aria-hidden
+          >
+            PR
+          </div>
+          <span className="font-heading font-semibold text-primary-blue text-[13px] leading-tight truncate">
+            Peinture Rémy Ouellette
+          </span>
+        </Link>
       </div>
 
-      {/* Panel */}
-      <div
-        className="w-[240px] flex flex-col bg-neutral-white overflow-hidden"
-        style={{ width: "240px" }}
-      >
-        <div className="p-4 border-b border-neutral-border shrink-0">
-          <Link
-            href="/accueil/overview"
-            className="flex items-center gap-3 focus-ring rounded"
-            aria-label="Accueil"
-          >
-            <div
-              className="h-7 w-7 shrink-0 rounded-full bg-primary-blue flex items-center justify-center text-white font-heading font-semibold text-caption-xs"
-              aria-hidden
-            >
-              PR
-            </div>
-            <div className="min-w-0">
-              <span className="font-heading font-semibold text-primary-blue text-[14px] leading-tight block truncate">
-                Peinture Rémy Ouellette
-              </span>
-              <span className="text-caption-xs text-neutral-text-secondary block">
-                Centre de gestion
-              </span>
-            </div>
-          </Link>
-        </div>
-        <nav className="flex-1 overflow-y-auto p-2">
-          <ul className="space-y-0.5">
-            {activeGroup.items.map((item) => {
-              const isActive = pathname === item.href;
-              const Icon = item.icon;
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`
-                      flex items-center gap-2.5 h-[34px] px-3 rounded text-body transition-colors focus-ring
-                      ${isActive ? "bg-neutral-bg-active text-neutral-text" : "text-neutral-text hover:bg-neutral-bg-subtle"}
-                    `}
-                    style={{ fontSize: "14px" }}
-                  >
-                    {isActive && (
-                      <span
-                        className="w-1.5 h-1.5 rounded-full bg-primary-orange shrink-0"
-                        aria-hidden
-                      />
+      <nav className="flex-1 overflow-y-auto py-2">
+        <ul className="space-y-0.5 px-2">
+          {SIDEBAR_GROUPS.map((group) => {
+            const isOpen = openGroups.has(group.id) || group.items.length === 1;
+            const Icon = group.icon;
+            const hasChildren = group.items.length > 1;
+            const firstHref = group.items[0].href;
+
+            return (
+              <li key={group.id}>
+                {hasChildren ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(group.id)}
+                      className="w-full flex items-center gap-2 h-8 px-2 rounded-md text-left text-caption font-medium text-neutral-text hover:bg-neutral-bg-subtle transition-colors focus-ring"
+                      style={{ fontSize: "13px" }}
+                    >
+                      {isOpen ? (
+                        <ChevronDown size={14} className="shrink-0 text-neutral-text-secondary" />
+                      ) : (
+                        <ChevronRight size={14} className="shrink-0 text-neutral-text-secondary" />
+                      )}
+                      <Icon size={16} strokeWidth={1.7} className="shrink-0 text-neutral-text-secondary" />
+                      <span className="truncate">{group.label}</span>
+                    </button>
+                    {isOpen && (
+                      <ul className="ml-4 mt-0.5 mb-1 space-y-0.5 border-l border-neutral-border pl-3">
+                        {group.items.map((item) => {
+                          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                          return (
+                            <li key={item.href}>
+                              <Link
+                                href={item.href}
+                                className={`
+                                  flex items-center h-7 px-2 rounded-md text-caption transition-colors focus-ring
+                                  ${isActive ? "bg-neutral-bg-active text-neutral-text font-medium" : "text-neutral-text-secondary hover:bg-neutral-bg-subtle hover:text-neutral-text"}
+                                `}
+                                style={{ fontSize: "13px" }}
+                              >
+                                <span className="truncate">{item.label}</span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
                     )}
-                    {!isActive && <span className="w-1.5 shrink-0" aria-hidden />}
-                    <Icon
-                      size={18}
-                      strokeWidth={1.7}
-                      className={`shrink-0 ${isActive ? "text-neutral-text" : "text-neutral-text-secondary"}`}
-                      aria-hidden
-                    />
-                    <span className="truncate">{item.label}</span>
+                  </>
+                ) : (
+                  <Link
+                    href={firstHref}
+                    className={`
+                      flex items-center gap-2 h-8 px-2 rounded-md text-caption transition-colors focus-ring
+                      ${pathname === firstHref ? "bg-neutral-bg-active text-neutral-text font-medium" : "text-neutral-text hover:bg-neutral-bg-subtle"}
+                    `}
+                    style={{ fontSize: "13px" }}
+                  >
+                    <Icon size={16} strokeWidth={1.7} className="shrink-0 text-neutral-text-secondary" />
+                    <span className="truncate">{group.items[0].label}</span>
                   </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-      </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
     </aside>
   );
 }
