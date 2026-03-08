@@ -59,8 +59,43 @@ export const SIDEBAR_GROUPS: NavGroup[] = [
 
 export const DEFAULT_OPEN_GROUPS = new Set(["dashboard", "chantiers", "equipe", "materiel", "communication"]);
 
-export function getGroupIdForPath(pathname: string): string | null {
-  for (const g of SIDEBAR_GROUPS) {
+export type NavRole = "patron" | "employe";
+
+/** Groupes de navigation visibles par rôle. Patron = tout; Employé = pas Finances, Paramètres, ni liste Employés/Inventaire. */
+export function getSidebarGroupsForRole(role: NavRole): NavGroup[] {
+  if (role === "patron") return SIDEBAR_GROUPS;
+  return [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, items: [{ href: "/accueil/overview", label: "Dashboard" }] },
+    { id: "agenda", label: "Agenda", icon: Calendar, items: [{ href: "/accueil/agenda", label: "Agenda" }] },
+    {
+      id: "communication",
+      label: "Communication",
+      icon: Megaphone,
+      items: [
+        { href: "/patron/affectations", label: "Brief & instructions" },
+        { href: "/accueil/annonces", label: "Annonces" },
+      ],
+    },
+    {
+      id: "equipe",
+      label: "Équipe",
+      icon: Users,
+      items: [
+        { href: "/employes/affectations", label: "Affectations" },
+        { href: "/employes/avancement", label: "Avancement quotidien" },
+      ],
+    },
+    {
+      id: "materiel",
+      label: "Matériel",
+      icon: Package,
+      items: [{ href: "/employes/materiel", label: "Matériel utilisé" }],
+    },
+  ];
+}
+
+export function getGroupIdForPath(pathname: string, groups: NavGroup[] = SIDEBAR_GROUPS): string | null {
+  for (const g of groups) {
     if (g.items.some((i) => pathname === i.href || pathname.startsWith(i.href + "/"))) return g.id;
   }
   return null;

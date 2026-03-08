@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { AssistantTriggerButton } from "@/components/assistant/AssistantTriggerButton";
+import { UserMenu } from "@/components/layout/UserMenu";
+import type { Profile } from "@/lib/auth/auth";
 
 const breadcrumbMap: Record<string, { category: string; page: string }> = {
   "/accueil/overview": { category: "Dashboard", page: "Vue d'ensemble" },
@@ -41,7 +43,7 @@ function formatDateShort(date: Date): string {
   return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(date);
 }
 
-export function Topbar({ onOpenMenu }: { onOpenMenu?: () => void }) {
+export function Topbar({ onOpenMenu, profile }: { onOpenMenu?: () => void; profile: Profile }) {
   const pathname = usePathname();
   const { category, page } = getBreadcrumb(pathname);
 
@@ -82,6 +84,7 @@ export function Topbar({ onOpenMenu }: { onOpenMenu?: () => void }) {
 
       <div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto">
         <AssistantTriggerButton />
+        <UserMenu profile={profile} />
         <time
           className="text-caption text-neutral-text-secondary"
           dateTime={new Date().toISOString().slice(0, 10)}

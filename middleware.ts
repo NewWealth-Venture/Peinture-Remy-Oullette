@@ -1,32 +1,36 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
 
-const COOKIE_NAME = "app_gate";
-const GATE_PATH = "/acces";
+const PUBLIC_PATHS = ["/login", "/reset-password"];
+const LOGIN_PATH = "/login";
+const DEFAULT_REDIRECT = "/accueil/overview";
 
-export function middleware(request: NextRequest) {
-  const code = process.env.APP_ACCESS_CODE;
-  if (!code) {
-    return NextResponse.next();
-  }
-  if (request.nextUrl.pathname === GATE_PATH) {
-    const cookie = request.cookies.get(COOKIE_NAME)?.value;
-    if (cookie === code) {
-      return NextResponse.redirect(new URL("/", request.url));
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  const { response, user } = await updateSession(request);
+
+  const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  if (isPublic) {
+    if (user) {
+      const url = request.nextUrl.clone();
+      url.pathname = request.nextUrl.searchParams.get("from") || DEFAULT_REDIRECT;
+      url.searchParams.delete("from");
+      return NextResponse.redirect(url);
     }
-    return NextResponse.next();
+    return response;
   }
-  const cookie = request.cookies.get(COOKIE_NAME)?.value;
-  if (cookie === code) {
-    return NextResponse.next();
+
+  if (!user) {
+    const url = new URL(LOGIN_PATH, request.url);
+    url.searchParams.set("from", pathname);
+    return NextResponse.redirect(url);
   }
-  const url = new URL(GATE_PATH, request.url);
-  url.searchParams.set("from", request.nextUrl.pathname);
-  return NextResponse.redirect(url);
+
+  return response;
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api).*)"],
 };

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { runAssistant } from "@/lib/ai/assistant";
 import type { AssistantPageContext } from "@/lib/ai/context";
 
@@ -9,6 +10,11 @@ export type AIAssistantRequestBody = {
 };
 
 export async function POST(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
   try {
     const body = (await request.json()) as AIAssistantRequestBody;
     const { messages, pageContext, includePageContext } = body;

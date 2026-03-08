@@ -1,9 +1,11 @@
+import { requireProfile } from "@/lib/auth/guards";
 import { AppShell } from "@/components/AppShell";
 
-export default function ShellLayout({
+export default async function ShellLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <AppShell>{children}</AppShell>;
+  const profile = await requireProfile();
+  return <AppShell profile={profile}>{children}</AppShell>;
 }

@@ -5,12 +5,15 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
 import { X, ChevronDown, ChevronRight } from "lucide-react";
-import { SIDEBAR_GROUPS, DEFAULT_OPEN_GROUPS, getGroupIdForPath } from "@/lib/nav-config";
+import { getSidebarGroupsForRole, getGroupIdForPath, type NavRole } from "@/lib/nav-config";
 
-export function MobileNavDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+const DEFAULT_OPEN = new Set(["dashboard", "chantiers", "equipe", "materiel", "communication"]);
+
+export function MobileNavDrawer({ open, onClose, role = "patron" }: { open: boolean; onClose: () => void; role?: NavRole }) {
   const pathname = usePathname();
-  const activeGroupId = useMemo(() => getGroupIdForPath(pathname), [pathname]);
-  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(DEFAULT_OPEN_GROUPS));
+  const groups = useMemo(() => getSidebarGroupsForRole(role), [role]);
+  const activeGroupId = useMemo(() => getGroupIdForPath(pathname, groups), [pathname, groups]);
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(DEFAULT_OPEN));
 
   useEffect(() => {
     if (!open) return;
@@ -62,7 +65,7 @@ export function MobileNavDrawer({ open, onClose }: { open: boolean; onClose: () 
         </div>
         <nav className="flex-1 overflow-y-auto py-3 px-2">
           <ul className="space-y-0.5">
-            {SIDEBAR_GROUPS.map((group) => {
+            {groups.map((group) => {
               const isOpen = openGroups.has(group.id) || group.items.length === 1;
               const Icon = group.icon;
               const hasChildren = group.items.length > 1;
