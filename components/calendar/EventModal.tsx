@@ -26,7 +26,7 @@ interface EventModalProps {
   onClose: () => void;
   projets?: Projet[];
   initialEvent: CalendarEvent | null;
-  onSave: (data: Omit<CalendarEvent, "id"> | Partial<CalendarEvent>) => void;
+  onSave: (data: Omit<CalendarEvent, "id">) => void;
   onDelete?: () => void;
 }
 
