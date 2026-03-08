@@ -333,7 +333,7 @@ export function ChantiersContent({ initialProjects, initialEmployees, initialPro
     }
     router.refresh();
     if (result.id) setSelectedProjectId(result.id);
-    return result.id;
+    return result.id ?? null;
   };
 
   const calendarEvents = useMemo(() => {

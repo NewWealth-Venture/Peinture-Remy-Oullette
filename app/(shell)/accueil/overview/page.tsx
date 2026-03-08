@@ -8,6 +8,7 @@ import { listEmployees } from "@/lib/db/employees";
 import { listAnnouncements } from "@/lib/db/announcements";
 import { listEventsInRange } from "@/lib/db/calendar";
 import { getLowStockItems } from "@/lib/db/inventory";
+import { listLatestDailyProgress } from "@/lib/db/progress";
 import { listProjectAssignments } from "@/lib/db/projects";
 
 const cols = ["Chantier", "Adresse", "Équipe", "Statut"];
