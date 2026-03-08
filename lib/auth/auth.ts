@@ -19,15 +19,19 @@ export async function getCurrentUser() {
 export async function getCurrentProfile(): Promise<Profile | null> {
   const user = await getCurrentUser();
   if (!user) return null;
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, full_name, role, active, created_at, updated_at")
-    .eq("id", user.id)
-    .single();
-  if (error || !data) return null;
-  if (!data.active) return null;
-  return data as Profile;
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, full_name, role, active, created_at, updated_at")
+      .eq("id", user.id)
+      .single();
+    if (error || !data) return null;
+    if (!data.active) return null;
+    return data as Profile;
+  } catch {
+    return null;
+  }
 }
 
 export async function getUserRole(): Promise<"patron" | "employe" | null> {

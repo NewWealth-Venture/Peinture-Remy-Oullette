@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser, getCurrentProfile, type Profile } from "@/lib/auth/auth";
 import type { AppRole } from "@/lib/auth/roles";
 
@@ -14,13 +15,19 @@ export async function requireUser() {
   return user;
 }
 
-/** Redirige vers /login si non connecté ou sans profil actif. Retourne le profil. */
+/** Redirige vers /login si non connecté ou sans profil actif. Retourne le profil. Si connecté mais pas de profil, déconnecte d'abord pour éviter une boucle de redirection. */
 export async function requireProfile(): Promise<Profile> {
-  const profile = await getCurrentProfile();
-  if (!profile) {
+  const user = await getCurrentUser();
+  if (!user) {
     redirect(LOGIN_PATH);
   }
-  return profile;
+  const profile = await getCurrentProfile();
+  if (profile) {
+    return profile;
+  }
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect(LOGIN_PATH);
 }
 
 /** Redirige vers l'app si déjà connecté (pour la page login). */
