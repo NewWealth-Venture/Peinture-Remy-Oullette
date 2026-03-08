@@ -42,10 +42,18 @@ export function LoginForm() {
         return;
       }
       if (data.user) {
-        const { data: profile } = await supabase.from("profiles").select("active").eq("id", data.user.id).single();
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("active")
+          .eq("id", data.user.id)
+          .maybeSingle();
         if (profile && profile.active === false) {
           await supabase.auth.signOut();
           setError("Ce compte est désactivé.");
+          return;
+        }
+        if (profileError) {
+          setError("Profil inaccessible. Vérifiez que la table profiles existe et que votre compte a un profil.");
           return;
         }
         router.push(from);
