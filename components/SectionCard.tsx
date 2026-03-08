@@ -21,11 +21,11 @@ export function SectionCard({
       className={`bg-neutral-white border border-neutral-border rounded overflow-hidden ${className}`}
       aria-labelledby={`section-${slug}`}
     >
-      <div className="px-4 py-2.5 border-b border-neutral-border flex items-center justify-between gap-4 min-h-[44px]">
+      <div className="px-3 sm:px-4 py-2.5 border-b border-neutral-border flex items-center justify-between gap-2 sm:gap-4 min-h-[44px]">
         <div className="min-w-0">
           <h2
             id={`section-${slug}`}
-            className="font-heading text-section-title text-neutral-text"
+            className="font-heading text-section-title text-neutral-text truncate"
           >
             {title}
           </h2>
@@ -37,7 +37,7 @@ export function SectionCard({
         </div>
         {actions != null && <div className="shrink-0">{actions}</div>}
       </div>
-      <div className="p-4 flex flex-col gap-4 min-h-0">{children}</div>
+      <div className="p-3 sm:p-4 flex flex-col gap-4 min-h-0">{children}</div>
     </section>
   );
 }

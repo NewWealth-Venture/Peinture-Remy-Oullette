@@ -11,7 +11,7 @@ export function AssistantTriggerButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="p-2 rounded text-neutral-text-secondary hover:bg-neutral-bg-subtle hover:text-neutral-text focus-ring"
+        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-neutral-text-secondary hover:bg-neutral-bg-subtle hover:text-neutral-text focus-ring"
         aria-label="Assistant IA"
         title="Assistant IA"
       >

@@ -351,12 +351,20 @@ export function ChantiersContent({ initialProjects, initialEmployees, initialPro
   const startPad = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
   const daysInMonth = lastDay.getDate();
 
+  const handleRowClick = (p: Projet) => {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      router.push(`/patron/projets/${p.id}`);
+    } else {
+      setSelectedProjectId(p.id);
+    }
+  };
+
   return (
-    <div className="px-6 py-6 max-w-[1180px] mx-auto">
+    <div className="px-0 sm:px-4 lg:px-6 py-4 sm:py-6 max-w-[1180px] mx-auto">
       <PageHeader title="Chantiers" subtitle="Pilotage des projets, tâches, photos et avancement." />
 
-      <div className="flex flex-wrap items-center gap-3 mb-4">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4">
+        <div className="relative flex-1 min-w-0 sm:min-w-[200px]">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-text-secondary pointer-events-none" />
           <input type="search" className={inputClass + " pl-9"} value={searchVal} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un chantier..." />
         </div>
@@ -384,8 +392,8 @@ export function ChantiersContent({ initialProjects, initialEmployees, initialPro
         ))}
       </div>
 
-      <div className="flex gap-0 min-h-[480px]" style={{ maxHeight: "calc(100vh - 280px)" }}>
-        <div className="w-[65%] flex flex-col min-w-0 border border-neutral-border rounded-l overflow-hidden bg-neutral-white">
+      <div className="flex flex-col lg:flex-row gap-0 min-h-0 lg:min-h-[480px] lg:max-h-[calc(100vh-280px)]">
+        <div className="w-full lg:w-[65%] flex flex-col min-w-0 border border-neutral-border rounded-t lg:rounded-l lg:rounded-t-none overflow-hidden bg-neutral-white flex-1 min-h-[320px]">
           {filtered.length === 0 ? (
             <div className="flex-1 flex items-center gap-4 p-6">
               <MapPin size={24} className="text-neutral-text-secondary shrink-0" strokeWidth={1.7} />
@@ -415,7 +423,7 @@ export function ChantiersContent({ initialProjects, initialEmployees, initialPro
                     <tr
                       key={p.id}
                       className={`border-b border-neutral-border hover:bg-neutral-bg-subtle cursor-pointer ${selectedId === p.id ? "bg-primary-blue/5" : ""}`}
-                      onClick={() => setSelectedProjectId(p.id)}
+                      onClick={() => handleRowClick(p)}
                     >
                       <td className="py-2.5 px-4">
                         <p className="font-medium text-neutral-text">{p.titre}</p>
@@ -454,7 +462,7 @@ export function ChantiersContent({ initialProjects, initialEmployees, initialPro
                             <button
                               key={p.id}
                               type="button"
-                              onClick={() => setSelectedProjectId(p.id)}
+                              onClick={() => handleRowClick(p)}
                               className={`w-full text-left p-2.5 rounded border border-neutral-border bg-neutral-white hover:bg-neutral-bg-subtle focus-ring ${selectedId === p.id ? "ring-2 ring-primary-blue/20" : ""}`}
                             >
                               <p className="font-medium text-neutral-text text-caption truncate">{p.titre}</p>
@@ -499,7 +507,7 @@ export function ChantiersContent({ initialProjects, initialEmployees, initialPro
                         <ul className="mt-1 space-y-0.5">
                           {dayEvents.slice(0, 2).map((p) => (
                             <li key={p.id}>
-                              <button type="button" onClick={() => setSelectedProjectId(p.id)} className="text-left text-caption-xs text-primary-blue hover:underline truncate block w-full">
+                              <button type="button" onClick={() => handleRowClick(p)} className="text-left text-caption-xs text-primary-blue hover:underline truncate block w-full">
                                 {p.titre}
                               </button>
                             </li>
@@ -517,7 +525,7 @@ export function ChantiersContent({ initialProjects, initialEmployees, initialPro
             </div>
           )}
         </div>
-        <div className="w-[35%] min-w-0 flex flex-col bg-neutral-white" style={{ minHeight: "400px" }}>
+        <div className="hidden lg:flex w-[35%] min-w-0 flex-col bg-neutral-white border border-neutral-border border-l-0 rounded-r" style={{ minHeight: "400px" }}>
           <DetailPanel
             project={selectedProject}
             onOpenEdit={() => selectedProject && (window.location.href = `/patron/projets/${selectedProject.id}`)}

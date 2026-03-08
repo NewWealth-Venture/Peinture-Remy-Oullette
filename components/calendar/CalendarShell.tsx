@@ -141,8 +141,8 @@ export function CalendarShell({ projets = [], initialEvents, onAddEvent, onUpdat
   }, [events]);
 
   return (
-    <div className="grid grid-cols-12 gap-6 max-w-[1180px] mx-auto">
-      <div className="col-span-12 lg:col-span-8 flex flex-col gap-4">
+    <div className="grid grid-cols-12 gap-4 sm:gap-6 max-w-[1180px] mx-auto min-w-0">
+      <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 min-w-0">
         <CalendarToolbar
           selectedDate={selectedDate}
           onSelectedDateChange={setSelectedDate}

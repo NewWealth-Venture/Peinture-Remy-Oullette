@@ -139,7 +139,7 @@ export default async function AccueilOverviewPage() {
         title="Centre de pilotage"
         subtitle="Chantiers actifs, équipes terrain, alertes et activité."
       />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-w-0">
         {/* 1) Chantiers actifs aujourd'hui */}
         <SectionCard
           title="Chantiers actifs"

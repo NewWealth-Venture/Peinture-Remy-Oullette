@@ -44,11 +44,11 @@ export function CalendarToolbar({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
       <button
         type="button"
         onClick={goToday}
-        className="h-9 px-3 text-caption font-medium text-neutral-text bg-neutral-bg-subtle border border-neutral-border rounded hover:bg-neutral-bg-active focus-ring"
+        className="min-h-[44px] px-3 text-caption font-medium text-neutral-text bg-neutral-bg-subtle border border-neutral-border rounded hover:bg-neutral-bg-active focus-ring"
       >
         Aujourd&apos;hui
       </button>
@@ -56,18 +56,18 @@ export function CalendarToolbar({
         <button
           type="button"
           onClick={goPrev}
-          className="h-9 w-9 flex items-center justify-center text-neutral-text hover:bg-neutral-bg-active focus-ring"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-neutral-text hover:bg-neutral-bg-active focus-ring"
           aria-label="Période précédente"
         >
           <ChevronLeft size={18} strokeWidth={1.7} />
         </button>
-        <span className="min-w-[160px] px-3 py-2 text-caption font-medium text-neutral-text text-center">
+        <span className="min-w-[120px] sm:min-w-[160px] px-2 sm:px-3 py-2 text-caption font-medium text-neutral-text text-center truncate">
           {title}
         </span>
         <button
           type="button"
           onClick={goNext}
-          className="h-9 w-9 flex items-center justify-center text-neutral-text hover:bg-neutral-bg-active focus-ring"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-neutral-text hover:bg-neutral-bg-active focus-ring"
           aria-label="Période suivante"
         >
           <ChevronRight size={18} strokeWidth={1.7} />
@@ -77,7 +77,7 @@ export function CalendarToolbar({
         <button
           type="button"
           onClick={() => onViewModeChange("month")}
-          className={`h-9 px-3 text-caption font-medium focus-ring ${
+          className={`min-h-[44px] px-3 text-caption font-medium focus-ring ${
             viewMode === "month"
               ? "bg-neutral-bg-active text-neutral-text"
               : "text-neutral-text-secondary hover:bg-neutral-bg-active"
@@ -88,7 +88,7 @@ export function CalendarToolbar({
         <button
           type="button"
           onClick={() => onViewModeChange("week")}
-          className={`h-9 px-3 text-caption font-medium focus-ring ${
+          className={`min-h-[44px] px-3 text-caption font-medium focus-ring ${
             viewMode === "week"
               ? "bg-neutral-bg-active text-neutral-text"
               : "text-neutral-text-secondary hover:bg-neutral-bg-active"
@@ -100,7 +100,7 @@ export function CalendarToolbar({
       <button
         type="button"
         onClick={onNewEvent}
-        className="h-9 px-3.5 text-caption font-medium text-white bg-primary-orange border border-primary-orange rounded hover:opacity-90 focus-ring ml-auto"
+        className="min-h-[44px] px-3.5 text-caption font-medium text-white bg-primary-orange border border-primary-orange rounded hover:opacity-90 focus-ring ml-auto"
       >
         <Plus size={18} strokeWidth={1.7} className="inline-block mr-1.5 align-middle" />
         Nouvel événement

@@ -6,7 +6,7 @@ export default async function EmployesListePage() {
   const employees = await listEmployees(false);
 
   return (
-    <div className="p-6">
+    <div className="min-w-0">
       <PageHeader title="Liste des employés" subtitle="Effectif et statut actuel." />
       <EmployesListeClient initialEmployees={employees} />
     </div>

@@ -81,12 +81,12 @@ export function AssistantPanel({ open, onClose }: AssistantPanelProps) {
   return (
     <>
       <div
-        className="fixed top-[56px] left-0 right-0 bottom-0 z-40 bg-black/20"
+        className="fixed inset-0 lg:top-[56px] lg:left-0 lg:right-0 lg:bottom-0 z-40 bg-black/20"
         aria-hidden
         onClick={onClose}
       />
       <aside
-        className="fixed top-[56px] right-0 z-50 w-full max-w-[420px] h-[calc(100vh-56px)] flex flex-col bg-neutral-white border-l border-neutral-border shadow-lg"
+        className="fixed inset-0 z-50 flex flex-col bg-neutral-white shadow-lg lg:inset-auto lg:top-[56px] lg:right-0 lg:left-auto lg:bottom-auto lg:w-full lg:max-w-[420px] lg:h-[calc(100vh-56px)] lg:border-l lg:border-neutral-border"
         role="dialog"
         aria-label="Assistant IA"
       >

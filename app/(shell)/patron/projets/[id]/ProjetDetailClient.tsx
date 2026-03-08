@@ -201,11 +201,11 @@ export function ProjetDetailClient({
   };
 
   return (
-    <div className="p-6 max-w-[1280px] mx-auto">
+    <div className="p-4 sm:p-6 max-w-[1280px] mx-auto min-w-0">
       {/* HEADER */}
-      <header className="mb-4 flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <Link href="/patron/projets" className="p-2 rounded text-neutral-text-secondary hover:bg-neutral-bg-subtle focus-ring shrink-0" aria-label="Retour">
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <Link href="/patron/projets" className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-neutral-text-secondary hover:bg-neutral-bg-subtle focus-ring shrink-0" aria-label="Retour">
             <ArrowLeft size={20} strokeWidth={1.7} />
           </Link>
           <div className="min-w-0">
@@ -220,14 +220,14 @@ export function ProjetDetailClient({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button type="button" onClick={openNewTask} className="h-8 px-3 rounded border border-neutral-border bg-neutral-white text-caption font-medium text-neutral-text hover:bg-neutral-bg-subtle focus-ring flex items-center gap-1.5">
+          <button type="button" onClick={openNewTask} className="min-h-[44px] px-3 rounded border border-neutral-border bg-neutral-white text-caption font-medium text-neutral-text hover:bg-neutral-bg-subtle focus-ring flex items-center gap-1.5">
             <ListTodo size={16} /> Tâche
           </button>
-          <label className="h-8 px-3 rounded border border-neutral-border bg-neutral-white text-caption font-medium text-neutral-text hover:bg-neutral-bg-subtle focus-ring flex items-center gap-1.5 cursor-pointer">
+          <label className="min-h-[44px] px-3 rounded border border-neutral-border bg-neutral-white text-caption font-medium text-neutral-text hover:bg-neutral-bg-subtle focus-ring flex items-center gap-1.5 cursor-pointer">
             <ImageIcon size={16} /> Photo
             <input type="file" accept="image/*" onChange={onPhotoFileSelect} disabled={photoUploading} className="hidden" />
           </label>
-          <button type="button" onClick={() => setProgressModalOpen(true)} className="h-8 px-3 rounded border border-neutral-border bg-neutral-white text-caption font-medium text-neutral-text hover:bg-neutral-bg-subtle focus-ring flex items-center gap-1.5">
+          <button type="button" onClick={() => setProgressModalOpen(true)} className="min-h-[44px] px-3 rounded border border-neutral-border bg-neutral-white text-caption font-medium text-neutral-text hover:bg-neutral-bg-subtle focus-ring flex items-center gap-1.5">
             <TrendingUp size={16} /> Avancement
           </button>
         </div>
@@ -350,7 +350,7 @@ export function ProjetDetailClient({
               </label>
               {photoUploading && <span className="text-caption-xs text-neutral-text-secondary ml-2">Envoi…</span>}
             </div>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
               {(photosByCat[photoTab] ?? []).length === 0 ? (
                 <p className="col-span-3 text-caption-xs text-neutral-text-secondary py-2">Aucune photo.</p>
               ) : (

@@ -42,13 +42,18 @@ export function Modal({ open, onClose, title, children, maxWidth = "md" }: Modal
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  useEffect(() => {
+    if (open) document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
 
   const maxW = maxWidth === "sm" ? "max-w-sm" : maxWidth === "lg" ? "max-w-lg" : "max-w-md";
 
+  if (!open) return null;
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/30"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -56,17 +61,23 @@ export function Modal({ open, onClose, title, children, maxWidth = "md" }: Modal
     >
       <div
         ref={ref}
-        className={`bg-neutral-white border border-neutral-border rounded shadow-sm w-full ${maxW} max-h-[90vh] overflow-hidden flex flex-col`}
+        className={`bg-neutral-white border border-neutral-border shadow-sm w-full flex flex-col
+          sm:rounded sm:max-h-[90vh]
+          max-sm:rounded-t-xl max-sm:max-h-[92vh] max-sm:border-b-0
+          ${maxW}`}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <div className="px-4 py-3 border-b border-neutral-border shrink-0">
-            <h2 id="modal-title" className="text-section-title text-neutral-text font-heading">
+          <div className="px-4 py-3 border-b border-neutral-border shrink-0 flex items-center justify-between gap-2">
+            <h2 id="modal-title" className="text-section-title text-neutral-text font-heading truncate">
               {title}
             </h2>
+            <button type="button" onClick={onClose} className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded hover:bg-neutral-bg-subtle focus-ring text-neutral-text" aria-label="Fermer">
+              ×
+            </button>
           </div>
         )}
-        <div className="overflow-y-auto flex-1">{children}</div>
+        <div className="overflow-y-auto flex-1 min-h-0">{children}</div>
       </div>
     </div>
   );

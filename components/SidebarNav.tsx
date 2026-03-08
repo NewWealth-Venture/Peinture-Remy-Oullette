@@ -4,100 +4,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
-import {
-  LayoutDashboard,
-  Calendar,
-  FolderKanban,
-  Users,
-  Package,
-  Megaphone,
-  Banknote,
-  Settings,
-  ChevronDown,
-  ChevronRight,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-
-type NavItem = { href: string; label: string };
-type NavGroup = { id: string; label: string; icon: LucideIcon; items: NavItem[] };
-
-const SIDEBAR_GROUPS: NavGroup[] = [
-  {
-    id: "dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    items: [{ href: "/accueil/overview", label: "Dashboard" }],
-  },
-  {
-    id: "agenda",
-    label: "Agenda",
-    icon: Calendar,
-    items: [{ href: "/accueil/agenda", label: "Agenda" }],
-  },
-  {
-    id: "chantiers",
-    label: "Chantiers",
-    icon: FolderKanban,
-    items: [
-      { href: "/accueil/chantiers", label: "Projets" },
-      { href: "/accueil/estime", label: "Estimés" },
-    ],
-  },
-  {
-    id: "equipe",
-    label: "Équipe",
-    icon: Users,
-    items: [
-      { href: "/employes/liste", label: "Employés" },
-      { href: "/employes/affectations", label: "Affectations" },
-      { href: "/employes/avancement", label: "Avancement quotidien" },
-    ],
-  },
-  {
-    id: "materiel",
-    label: "Matériel",
-    icon: Package,
-    items: [
-      { href: "/patron/inventaire", label: "Inventaire" },
-      { href: "/employes/materiel", label: "Matériel utilisé" },
-    ],
-  },
-  {
-    id: "communication",
-    label: "Communication",
-    icon: Megaphone,
-    items: [
-      { href: "/patron/affectations", label: "Brief & instructions" },
-      { href: "/accueil/annonces", label: "Annonces" },
-    ],
-  },
-  {
-    id: "finances",
-    label: "Finances",
-    icon: Banknote,
-    items: [{ href: "/patron/finances", label: "Finances" }],
-  },
-  {
-    id: "parametres",
-    label: "Paramètres",
-    icon: Settings,
-    items: [{ href: "/patron/parametres", label: "Paramètres" }],
-  },
-];
-
-const DEFAULT_OPEN_GROUPS = new Set(["dashboard", "chantiers", "equipe", "materiel", "communication"]);
-
-function getGroupIdForPath(pathname: string): string | null {
-  for (const g of SIDEBAR_GROUPS) {
-    if (g.items.some((i) => pathname === i.href || pathname.startsWith(i.href + "/"))) return g.id;
-  }
-  return null;
-}
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { SIDEBAR_GROUPS, DEFAULT_OPEN_GROUPS, getGroupIdForPath } from "@/lib/nav-config";
 
 export function SidebarNav() {
   const pathname = usePathname();
   const activeGroupId = useMemo(() => getGroupIdForPath(pathname), [pathname]);
-
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(DEFAULT_OPEN_GROUPS));
 
   useEffect(() => {
@@ -119,20 +31,15 @@ export function SidebarNav() {
 
   return (
     <aside
-      className="w-sidebar shrink-0 flex flex-col min-h-screen border-r border-neutral-border bg-neutral-white"
+      className="hidden lg:flex w-sidebar shrink-0 flex-col min-h-screen border-r border-neutral-border bg-neutral-white"
       role="navigation"
       aria-label="Menu principal"
     >
       <div className="p-2 border-b border-neutral-border shrink-0">
-        <Link
-          href="/accueil/overview"
-          className="block w-full h-14 rounded-md overflow-hidden focus-ring relative"
-          aria-label="Peinture Rémy Ouellette - Accueil"
-        >
+        <Link href="/accueil/overview" className="block w-full h-14 rounded-md overflow-hidden focus-ring relative" aria-label="Peinture Rémy Ouellette - Accueil">
           <Image src="/logo.png" alt="" fill className="object-cover" sizes="260px" />
         </Link>
       </div>
-
       <nav className="flex-1 overflow-y-auto py-2">
         <ul className="space-y-0.5 px-2">
           {SIDEBAR_GROUPS.map((group) => {
@@ -140,7 +47,6 @@ export function SidebarNav() {
             const Icon = group.icon;
             const hasChildren = group.items.length > 1;
             const firstHref = group.items[0].href;
-
             return (
               <li key={group.id}>
                 {hasChildren ? (
@@ -151,11 +57,7 @@ export function SidebarNav() {
                       className="w-full flex items-center gap-2 h-8 px-2 rounded-md text-left text-caption font-medium text-neutral-text hover:bg-neutral-bg-subtle transition-colors focus-ring"
                       style={{ fontSize: "13px" }}
                     >
-                      {isOpen ? (
-                        <ChevronDown size={14} className="shrink-0 text-neutral-text-secondary" />
-                      ) : (
-                        <ChevronRight size={14} className="shrink-0 text-neutral-text-secondary" />
-                      )}
+                      {isOpen ? <ChevronDown size={14} className="shrink-0 text-neutral-text-secondary" /> : <ChevronRight size={14} className="shrink-0 text-neutral-text-secondary" />}
                       <Icon size={16} strokeWidth={1.7} className="shrink-0 text-neutral-text-secondary" />
                       <span className="truncate">{group.label}</span>
                     </button>
@@ -167,10 +69,7 @@ export function SidebarNav() {
                             <li key={item.href}>
                               <Link
                                 href={item.href}
-                                className={`
-                                  flex items-center h-7 px-2 rounded-md text-caption transition-colors focus-ring
-                                  ${isActive ? "bg-neutral-bg-active text-neutral-text font-medium" : "text-neutral-text-secondary hover:bg-neutral-bg-subtle hover:text-neutral-text"}
-                                `}
+                                className={`flex items-center h-7 px-2 rounded-md text-caption transition-colors focus-ring ${isActive ? "bg-neutral-bg-active text-neutral-text font-medium" : "text-neutral-text-secondary hover:bg-neutral-bg-subtle hover:text-neutral-text"}`}
                                 style={{ fontSize: "13px" }}
                               >
                                 <span className="truncate">{item.label}</span>
@@ -184,10 +83,7 @@ export function SidebarNav() {
                 ) : (
                   <Link
                     href={firstHref}
-                    className={`
-                      flex items-center gap-2 h-8 px-2 rounded-md text-caption transition-colors focus-ring
-                      ${pathname === firstHref ? "bg-neutral-bg-active text-neutral-text font-medium" : "text-neutral-text hover:bg-neutral-bg-subtle"}
-                    `}
+                    className={`flex items-center gap-2 h-8 px-2 rounded-md text-caption transition-colors focus-ring ${pathname === firstHref ? "bg-neutral-bg-active text-neutral-text font-medium" : "text-neutral-text hover:bg-neutral-bg-subtle"}`}
                     style={{ fontSize: "13px" }}
                   >
                     <Icon size={16} strokeWidth={1.7} className="shrink-0 text-neutral-text-secondary" />

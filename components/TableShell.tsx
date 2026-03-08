@@ -5,8 +5,8 @@ interface TableShellProps {
 
 export function TableShell({ columns, children }: TableShellProps) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-body">
+    <div className="overflow-x-auto min-w-0 -mx-1 px-1">
+      <table className="w-full min-w-[480px] border-collapse text-body">
         <thead>
           <tr className="border-b border-neutral-border">
             {columns.map((col) => (
