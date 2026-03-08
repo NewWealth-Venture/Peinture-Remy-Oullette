@@ -123,18 +123,13 @@ export function SidebarNav() {
       role="navigation"
       aria-label="Menu principal"
     >
-      <div className="p-3 border-b border-neutral-border shrink-0">
+      <div className="p-2 border-b border-neutral-border shrink-0">
         <Link
           href="/accueil/overview"
-          className="flex items-center gap-2.5 focus-ring rounded px-2 py-1.5 -mx-0.5"
-          aria-label="Accueil"
+          className="block w-full h-14 rounded-md overflow-hidden focus-ring relative"
+          aria-label="Peinture Rémy Ouellette - Accueil"
         >
-          <div className="h-7 w-7 shrink-0 rounded-md overflow-hidden relative bg-neutral-bg-subtle flex items-center justify-center" aria-hidden>
-            <Image src="/logo.png" alt="" width={28} height={28} className="object-contain" />
-          </div>
-          <span className="font-heading font-semibold text-primary-blue text-[13px] leading-tight truncate">
-            Peinture Rémy Ouellette
-          </span>
+          <Image src="/logo.png" alt="" fill className="object-cover" sizes="260px" />
         </Link>
       </div>
 
