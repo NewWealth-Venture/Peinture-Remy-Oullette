@@ -49,7 +49,7 @@ export function mapQuickBooksCustomerToClient(qb: QuickBooksCustomer): ClientIns
   return {
     quickbooks_customer_id: String(qb.Id),
     source: "quickbooks",
-    display_name: qb.DisplayName ?? [qb.GivenName, qb.FamilyName].filter(Boolean).join(" ") || qb.CompanyName ?? "Sans nom",
+    display_name: qb.DisplayName ?? (([qb.GivenName, qb.FamilyName].filter(Boolean).join(" ") || qb.CompanyName) ?? "Sans nom"),
     company_name: qb.CompanyName ?? null,
     given_name: qb.GivenName ?? null,
     family_name: qb.FamilyName ?? null,
