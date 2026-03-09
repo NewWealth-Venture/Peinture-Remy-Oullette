@@ -7,7 +7,7 @@ import type { Profile } from "@/lib/auth/auth";
 import { createClient } from "@/lib/supabase/client";
 
 const ROLE_LABELS: Record<string, string> = {
-  patron: "Patron",
+  patron: "Direction",
   employe: "Employé",
 };
 

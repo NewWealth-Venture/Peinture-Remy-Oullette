@@ -2,26 +2,96 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { getSidebarGroupsForRole, getGroupIdForPath, type NavRole } from "@/lib/nav-config";
+import {
+  getGroupsForCategory,
+  getGroupIdForPath,
+  getCategoryForPath,
+  getDefaultPathForCategory,
+  getStoredCategory,
+  setStoredCategory,
+  type NavCategory,
+} from "@/lib/navigation/config";
+import type { Profile } from "@/lib/auth/auth";
 
-const DEFAULT_OPEN = new Set(["dashboard", "chantiers", "equipe", "materiel", "communication"]);
+const COMPANY_NAME = "Peinture Rémy Ouellette";
 
-export function SidebarNav({ role = "patron" }: { role?: NavRole }) {
+function CategorySwitch({
+  activeCategory,
+  onSwitch,
+}: {
+  activeCategory: NavCategory;
+  onSwitch: (category: NavCategory) => void;
+}) {
+  return (
+    <div
+      className="flex rounded-md p-0.5 bg-neutral-bg-subtle border border-neutral-border"
+      style={{ borderRadius: "6px" }}
+      role="tablist"
+      aria-label="Contexte de navigation"
+    >
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeCategory === "employes"}
+        onClick={() => onSwitch("employes")}
+        className={`flex-1 min-w-0 py-2 px-3 rounded text-caption font-medium transition-colors focus-ring h-9 ${activeCategory === "employes" ? "bg-neutral-white text-neutral-text shadow-sm border border-neutral-border" : "text-neutral-text-secondary hover:text-neutral-text"}`}
+        style={{ fontSize: "13px", borderRadius: "5px" }}
+      >
+        Employés
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeCategory === "direction"}
+        onClick={() => onSwitch("direction")}
+        className={`flex-1 min-w-0 py-2 px-3 rounded text-caption font-medium transition-colors focus-ring h-9 ${activeCategory === "direction" ? "bg-neutral-white text-neutral-text shadow-sm border border-neutral-border" : "text-neutral-text-secondary hover:text-neutral-text"}`}
+        style={{ fontSize: "13px", borderRadius: "5px" }}
+      >
+        Direction
+      </button>
+    </div>
+  );
+}
+
+export function SidebarNav({ profile }: { profile: Profile }) {
   const pathname = usePathname();
-  const groups = useMemo(() => getSidebarGroupsForRole(role), [role]);
+  const router = useRouter();
+  const [activeCategory, setActiveCategory] = useState<NavCategory>(() =>
+    getCategoryForPath(pathname, getStoredCategory())
+  );
+
+  useEffect(() => {
+    const stored = getStoredCategory();
+    if (stored == null && profile?.role) {
+      setStoredCategory(profile.role === "employe" ? "employes" : "direction");
+    }
+  }, [profile?.role]);
+
+  useEffect(() => {
+    setActiveCategory((prev) => getCategoryForPath(pathname, prev));
+  }, [pathname]);
+
+  const groups = useMemo(() => getGroupsForCategory(activeCategory), [activeCategory]);
   const activeGroupId = useMemo(() => getGroupIdForPath(pathname, groups), [pathname, groups]);
-  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(DEFAULT_OPEN));
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(groups.map((g) => g.id)));
 
   useEffect(() => {
     setOpenGroups((prev) => {
       const next = new Set(prev);
       if (activeGroupId) next.add(activeGroupId);
+      groups.forEach((g) => next.add(g.id));
       return next;
     });
-  }, [activeGroupId]);
+  }, [activeGroupId, groups]);
+
+  const handleCategorySwitch = (category: NavCategory) => {
+    setStoredCategory(category);
+    setActiveCategory(category);
+    router.push(getDefaultPathForCategory(category));
+  };
 
   const toggleGroup = (id: string) => {
     setOpenGroups((prev) => {
@@ -38,10 +108,18 @@ export function SidebarNav({ role = "patron" }: { role?: NavRole }) {
       role="navigation"
       aria-label="Menu principal"
     >
-      <div className="p-2 border-b border-neutral-border shrink-0">
-        <Link href="/accueil/overview" className="block w-full h-14 rounded-md overflow-hidden focus-ring relative" aria-label="Peinture Rémy Ouellette - Accueil">
+      <div className="p-3 border-b border-neutral-border shrink-0 space-y-3">
+        <Link
+          href={getDefaultPathForCategory(activeCategory)}
+          className="block w-full h-12 rounded-md overflow-hidden focus-ring relative"
+          aria-label={`${COMPANY_NAME} - Accueil`}
+        >
           <Image src="/logo.png" alt="" fill className="object-cover" sizes="260px" />
         </Link>
+        <p className="text-caption font-medium text-neutral-text truncate px-0.5" style={{ fontSize: "12px" }}>
+          {COMPANY_NAME}
+        </p>
+        <CategorySwitch activeCategory={activeCategory} onSwitch={handleCategorySwitch} />
       </div>
       <nav className="flex-1 overflow-y-auto py-2">
         <ul className="space-y-0.5 px-2">
@@ -57,10 +135,14 @@ export function SidebarNav({ role = "patron" }: { role?: NavRole }) {
                     <button
                       type="button"
                       onClick={() => toggleGroup(group.id)}
-                      className="w-full flex items-center gap-2 h-8 px-2 rounded-md text-left text-caption font-medium text-neutral-text hover:bg-neutral-bg-subtle transition-colors focus-ring"
+                      className="w-full flex items-center gap-2 h-9 px-2 rounded-md text-left text-caption font-medium text-neutral-text hover:bg-neutral-bg-subtle transition-colors focus-ring"
                       style={{ fontSize: "13px" }}
                     >
-                      {isOpen ? <ChevronDown size={14} className="shrink-0 text-neutral-text-secondary" /> : <ChevronRight size={14} className="shrink-0 text-neutral-text-secondary" />}
+                      {isOpen ? (
+                        <ChevronDown size={14} className="shrink-0 text-neutral-text-secondary" />
+                      ) : (
+                        <ChevronRight size={14} className="shrink-0 text-neutral-text-secondary" />
+                      )}
                       <Icon size={16} strokeWidth={1.7} className="shrink-0 text-neutral-text-secondary" />
                       <span className="truncate">{group.label}</span>
                     </button>
@@ -72,7 +154,7 @@ export function SidebarNav({ role = "patron" }: { role?: NavRole }) {
                             <li key={item.href}>
                               <Link
                                 href={item.href}
-                                className={`flex items-center h-7 px-2 rounded-md text-caption transition-colors focus-ring ${isActive ? "bg-neutral-bg-active text-neutral-text font-medium" : "text-neutral-text-secondary hover:bg-neutral-bg-subtle hover:text-neutral-text"}`}
+                                className={`flex items-center h-9 px-2 rounded-md text-caption transition-colors focus-ring ${isActive ? "bg-neutral-bg-active text-neutral-text font-medium" : "text-neutral-text-secondary hover:bg-neutral-bg-subtle hover:text-neutral-text"}`}
                                 style={{ fontSize: "13px" }}
                               >
                                 <span className="truncate">{item.label}</span>
@@ -86,7 +168,7 @@ export function SidebarNav({ role = "patron" }: { role?: NavRole }) {
                 ) : (
                   <Link
                     href={firstHref}
-                    className={`flex items-center gap-2 h-8 px-2 rounded-md text-caption transition-colors focus-ring ${pathname === firstHref ? "bg-neutral-bg-active text-neutral-text font-medium" : "text-neutral-text hover:bg-neutral-bg-subtle"}`}
+                    className={`flex items-center gap-2 h-9 px-2 rounded-md text-caption transition-colors focus-ring ${pathname === firstHref ? "bg-neutral-bg-active text-neutral-text font-medium" : "text-neutral-text hover:bg-neutral-bg-subtle"}`}
                     style={{ fontSize: "13px" }}
                   >
                     <Icon size={16} strokeWidth={1.7} className="shrink-0 text-neutral-text-secondary" />

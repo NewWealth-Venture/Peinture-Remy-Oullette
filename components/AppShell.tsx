@@ -11,8 +11,8 @@ export function AppShell({ children, profile }: { children: React.ReactNode; pro
 
   return (
     <div className="min-h-screen flex bg-neutral-white">
-      <SidebarNav role={profile.role} />
-      <MobileNavDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} role={profile.role} />
+      <SidebarNav profile={profile} />
+      <MobileNavDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} profile={profile} />
       <div className="flex-1 flex flex-col min-w-0 w-full">
         <Topbar onOpenMenu={() => setMobileMenuOpen(true)} profile={profile} />
         <main className="flex-1 overflow-auto">

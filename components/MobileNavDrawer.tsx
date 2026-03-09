@@ -2,27 +2,97 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
 import { X, ChevronDown, ChevronRight } from "lucide-react";
-import { getSidebarGroupsForRole, getGroupIdForPath, type NavRole } from "@/lib/nav-config";
+import {
+  getGroupsForCategory,
+  getGroupIdForPath,
+  getCategoryForPath,
+  getDefaultPathForCategory,
+  getStoredCategory,
+  setStoredCategory,
+  type NavCategory,
+} from "@/lib/navigation/config";
+import type { Profile } from "@/lib/auth/auth";
 
-const DEFAULT_OPEN = new Set(["dashboard", "chantiers", "equipe", "materiel", "communication"]);
+const COMPANY_NAME = "Peinture Rémy Ouellette";
 
-export function MobileNavDrawer({ open, onClose, role = "patron" }: { open: boolean; onClose: () => void; role?: NavRole }) {
+function CategorySwitch({
+  activeCategory,
+  onSwitch,
+}: {
+  activeCategory: NavCategory;
+  onSwitch: (category: NavCategory) => void;
+}) {
+  return (
+    <div
+      className="flex rounded-md p-0.5 bg-neutral-bg-subtle border border-neutral-border"
+      style={{ borderRadius: "6px" }}
+      role="tablist"
+      aria-label="Contexte de navigation"
+    >
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeCategory === "employes"}
+        onClick={() => onSwitch("employes")}
+        className={`flex-1 min-w-0 py-2.5 px-3 rounded text-caption font-medium transition-colors focus-ring h-10 ${activeCategory === "employes" ? "bg-neutral-white text-neutral-text shadow-sm border border-neutral-border" : "text-neutral-text-secondary hover:text-neutral-text"}`}
+        style={{ fontSize: "13px", borderRadius: "5px" }}
+      >
+        Employés
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeCategory === "direction"}
+        onClick={() => onSwitch("direction")}
+        className={`flex-1 min-w-0 py-2.5 px-3 rounded text-caption font-medium transition-colors focus-ring h-10 ${activeCategory === "direction" ? "bg-neutral-white text-neutral-text shadow-sm border border-neutral-border" : "text-neutral-text-secondary hover:text-neutral-text"}`}
+        style={{ fontSize: "13px", borderRadius: "5px" }}
+      >
+        Direction
+      </button>
+    </div>
+  );
+}
+
+export function MobileNavDrawer({ open, onClose, profile }: { open: boolean; onClose: () => void; profile: Profile }) {
   const pathname = usePathname();
-  const groups = useMemo(() => getSidebarGroupsForRole(role), [role]);
+  const router = useRouter();
+  const [activeCategory, setActiveCategory] = useState<NavCategory>(() =>
+    getCategoryForPath(pathname, getStoredCategory())
+  );
+
+  useEffect(() => {
+    const stored = getStoredCategory();
+    if (stored == null && profile?.role) {
+      setStoredCategory(profile.role === "employe" ? "employes" : "direction");
+    }
+  }, [profile?.role]);
+
+  useEffect(() => {
+    setActiveCategory((prev) => getCategoryForPath(pathname, prev));
+  }, [pathname]);
+
+  useEffect(() => {
+    if (open) {
+      setActiveCategory((prev) => getCategoryForPath(pathname, prev));
+    }
+  }, [open, pathname]);
+
+  const groups = useMemo(() => getGroupsForCategory(activeCategory), [activeCategory]);
   const activeGroupId = useMemo(() => getGroupIdForPath(pathname, groups), [pathname, groups]);
-  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(DEFAULT_OPEN));
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(groups.map((g) => g.id)));
 
   useEffect(() => {
     if (!open) return;
     setOpenGroups((prev) => {
       const next = new Set(prev);
       if (activeGroupId) next.add(activeGroupId);
+      groups.forEach((g) => next.add(g.id));
       return next;
     });
-  }, [open, activeGroupId]);
+  }, [open, activeGroupId, groups]);
 
   useEffect(() => {
     if (open) {
@@ -35,6 +105,13 @@ export function MobileNavDrawer({ open, onClose, role = "patron" }: { open: bool
       };
     }
   }, [open, onClose]);
+
+  const handleCategorySwitch = (category: NavCategory) => {
+    setStoredCategory(category);
+    setActiveCategory(category);
+    router.push(getDefaultPathForCategory(category));
+    onClose();
+  };
 
   const toggleGroup = (id: string) => {
     setOpenGroups((prev) => {
@@ -56,12 +133,27 @@ export function MobileNavDrawer({ open, onClose, role = "patron" }: { open: bool
         aria-label="Menu navigation"
       >
         <div className="flex items-center justify-between p-3 border-b border-neutral-border shrink-0">
-          <Link href="/accueil/overview" onClick={onClose} className="block h-12 w-32 relative rounded overflow-hidden focus-ring">
-            <Image src="/logo.png" alt="Peinture Rémy Ouellette" fill className="object-contain object-left" sizes="128px" />
+          <Link
+            href={getDefaultPathForCategory(activeCategory)}
+            onClick={onClose}
+            className="block h-12 w-32 relative rounded overflow-hidden focus-ring"
+          >
+            <Image src="/logo.png" alt={COMPANY_NAME} fill className="object-contain object-left" sizes="128px" />
           </Link>
-          <button type="button" onClick={onClose} className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-neutral-text hover:bg-neutral-bg-subtle focus-ring" aria-label="Fermer le menu">
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-neutral-text hover:bg-neutral-bg-subtle focus-ring"
+            aria-label="Fermer le menu"
+          >
             <X size={22} strokeWidth={1.7} />
           </button>
+        </div>
+        <div className="px-3 pt-3 pb-2 border-b border-neutral-border shrink-0">
+          <p className="text-caption font-medium text-neutral-text truncate mb-2" style={{ fontSize: "12px" }}>
+            {COMPANY_NAME}
+          </p>
+          <CategorySwitch activeCategory={activeCategory} onSwitch={handleCategorySwitch} />
         </div>
         <nav className="flex-1 overflow-y-auto py-3 px-2">
           <ul className="space-y-0.5">
@@ -80,7 +172,11 @@ export function MobileNavDrawer({ open, onClose, role = "patron" }: { open: bool
                         className="w-full flex items-center gap-3 min-h-[44px] px-3 rounded-md text-left text-caption font-medium text-neutral-text hover:bg-neutral-bg-subtle transition-colors focus-ring"
                         style={{ fontSize: "14px" }}
                       >
-                        {isOpen ? <ChevronDown size={18} className="shrink-0 text-neutral-text-secondary" /> : <ChevronRight size={18} className="shrink-0 text-neutral-text-secondary" />}
+                        {isOpen ? (
+                          <ChevronDown size={18} className="shrink-0 text-neutral-text-secondary" />
+                        ) : (
+                          <ChevronRight size={18} className="shrink-0 text-neutral-text-secondary" />
+                        )}
                         <Icon size={20} strokeWidth={1.7} className="shrink-0 text-neutral-text-secondary" />
                         <span className="truncate">{group.label}</span>
                       </button>

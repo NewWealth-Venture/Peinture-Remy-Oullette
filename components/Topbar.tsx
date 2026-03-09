@@ -6,34 +6,40 @@ import { Menu } from "lucide-react";
 import { AssistantTriggerButton } from "@/components/assistant/AssistantTriggerButton";
 import { UserMenu } from "@/components/layout/UserMenu";
 import type { Profile } from "@/lib/auth/auth";
+import { getCategoryForPath, getDefaultPathForCategory, getStoredCategory } from "@/lib/navigation/config";
 
-const breadcrumbMap: Record<string, { category: string; page: string }> = {
-  "/accueil/overview": { category: "Dashboard", page: "Vue d'ensemble" },
-  "/accueil/agenda": { category: "Agenda", page: "Planification" },
-  "/accueil/chantiers": { category: "Chantiers", page: "Projets" },
-  "/accueil/estime": { category: "Chantiers", page: "Estimés" },
-  "/accueil/annonces": { category: "Communication", page: "Annonces" },
-  "/employes/liste": { category: "Équipe", page: "Employés" },
-  "/employes/pointage": { category: "Équipe", page: "Pointage" },
-  "/employes/affectations": { category: "Équipe", page: "Affectations" },
-  "/employes/avancement": { category: "Équipe", page: "Avancement quotidien" },
-  "/employes/materiel": { category: "Matériel", page: "Matériel utilisé" },
-  "/employes/demandes": { category: "Équipe", page: "Demandes" },
-  "/patron/centre": { category: "Dashboard", page: "Centre" },
-  "/patron/rapports": { category: "Dashboard", page: "Rapports" },
-  "/patron/projets": { category: "Chantiers", page: "Projets" },
-  "/patron/inventaire": { category: "Matériel", page: "Inventaire" },
-  "/patron/affectations": { category: "Communication", page: "Brief & instructions" },
-  "/patron/finances": { category: "Finances", page: "Finances" },
-  "/patron/parametres": { category: "Paramètres", page: "Paramètres" },
+const pageLabelMap: Record<string, string> = {
+  "/accueil/overview": "Vue d'ensemble",
+  "/accueil/agenda": "Planification",
+  "/accueil/chantiers": "Projets",
+  "/accueil/estime": "Estimés",
+  "/accueil/annonces": "Annonces",
+  "/employes/liste": "Employés",
+  "/employes/pointage": "Pointage",
+  "/employes/affectations": "Affectations",
+  "/employes/avancement": "Avancement quotidien",
+  "/employes/materiel": "Matériel utilisé",
+  "/employes/demandes": "Demandes",
+  "/patron/centre": "Dashboard direction",
+  "/patron/rapports": "Rapports",
+  "/patron/projets": "Chantiers",
+  "/patron/inventaire": "Inventaire",
+  "/patron/affectations": "Brief & instructions",
+  "/patron/finances": "Finances",
+  "/patron/parametres": "Paramètres",
+  "/patron/projets/nouveau": "Nouveau chantier",
 };
 
-function getBreadcrumb(pathname: string) {
-  if (breadcrumbMap[pathname]) return breadcrumbMap[pathname];
-  const sorted = Object.keys(breadcrumbMap).sort((a, b) => b.length - a.length);
+function getPageLabel(pathname: string): string {
+  if (pageLabelMap[pathname]) return pageLabelMap[pathname];
+  const sorted = Object.keys(pageLabelMap).sort((a, b) => b.length - a.length);
   const match = sorted.find((path) => pathname.startsWith(path + "/"));
-  if (match) return breadcrumbMap[match];
-  return { category: "Dashboard", page: "Vue d'ensemble" };
+  if (match) {
+    if (pathname.startsWith("/patron/projets/") && pathname !== "/patron/projets" && pathname !== "/patron/projets/nouveau")
+      return "Détail chantier";
+    if (pathname.startsWith("/patron/inventaire/")) return pageLabelMap["/patron/inventaire"] || "Inventaire";
+  }
+  return "Vue d'ensemble";
 }
 
 function formatDateLong(date: Date): string {
@@ -45,7 +51,10 @@ function formatDateShort(date: Date): string {
 
 export function Topbar({ onOpenMenu, profile }: { onOpenMenu?: () => void; profile: Profile }) {
   const pathname = usePathname();
-  const { category, page } = getBreadcrumb(pathname);
+  const category = getCategoryForPath(pathname, getStoredCategory());
+  const sectionLabel = category === "employes" ? "Employés" : "Direction";
+  const sectionHref = getDefaultPathForCategory(category);
+  const page = getPageLabel(pathname);
 
   return (
     <header
@@ -64,8 +73,8 @@ export function Topbar({ onOpenMenu, profile }: { onOpenMenu?: () => void; profi
       )}
 
       <nav aria-label="Fil d'Ariane" className="flex items-center gap-1.5 sm:gap-2 text-caption shrink-0 min-w-0" style={{ fontSize: "13px" }}>
-        <Link href="/accueil/overview" className="text-neutral-text-secondary hover:text-neutral-text focus-ring rounded truncate max-w-[120px] sm:max-w-none">
-          {category}
+        <Link href={sectionHref} className="text-neutral-text-secondary hover:text-neutral-text focus-ring rounded truncate max-w-[120px] sm:max-w-none">
+          {sectionLabel}
         </Link>
         <span className="text-neutral-border shrink-0" aria-hidden>/</span>
         <span className="text-neutral-text font-medium truncate max-w-[140px] sm:max-w-[200px] lg:max-w-none">{page}</span>
