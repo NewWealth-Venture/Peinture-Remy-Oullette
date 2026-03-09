@@ -170,7 +170,7 @@ export async function listClients(opts?: {
       projectQ = projectQ.eq("status", "En cours");
     }
     const { data: projectRows } = await projectQ;
-    const clientIds = [...new Set((projectRows ?? []).map((r) => r.client_id as string).filter(Boolean))];
+    const clientIds = Array.from(new Set((projectRows ?? []).map((r) => r.client_id as string).filter(Boolean)));
     if (clientIds.length === 0) return [];
     q = q.in("id", clientIds);
   }
