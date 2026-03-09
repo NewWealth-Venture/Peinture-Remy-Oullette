@@ -5,6 +5,7 @@ export type ProjectPriority = "Basse" | "Normale" | "Haute";
 
 export type DbProject = {
   id: string;
+  client_id: string | null;
   title: string;
   address: string | null;
   description: string | null;
@@ -18,6 +19,7 @@ export type DbProject = {
 };
 
 export type ProjectInsert = {
+  client_id?: string | null;
   title: string;
   address?: string | null;
   description?: string | null;
@@ -45,6 +47,31 @@ export async function listProjects(): Promise<DbProject[]> {
   if (error) throw error;
   return (data ?? []).map(row => ({
     id: row.id,
+    client_id: row.client_id ?? null,
+    title: row.title,
+    address: row.address ?? null,
+    description: row.description ?? null,
+    status: row.status,
+    priority: row.priority ?? "Normale",
+    start_date: row.start_date ?? null,
+    end_date: row.end_date ?? null,
+    responsable: row.responsable ?? null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  }));
+}
+
+export async function listProjectsByClientId(clientId: string): Promise<DbProject[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("client_id", clientId)
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(row => ({
+    id: row.id,
+    client_id: row.client_id ?? null,
     title: row.title,
     address: row.address ?? null,
     description: row.description ?? null,
@@ -68,6 +95,7 @@ export async function getProjectById(id: string): Promise<DbProject | null> {
   if (!data) return null;
   return {
     id: data.id,
+    client_id: data.client_id ?? null,
     title: data.title,
     address: data.address ?? null,
     description: data.description ?? null,
@@ -86,6 +114,7 @@ export async function createProject(p: ProjectInsert): Promise<string> {
   const { data, error } = await supabase
     .from("projects")
     .insert({
+      client_id: p.client_id ?? null,
       title: p.title,
       address: p.address ?? null,
       description: p.description ?? null,

@@ -10,6 +10,7 @@ import * as progressDb from "@/lib/db/progress";
 import * as announcementsDb from "@/lib/db/announcements";
 import * as timesheetsDb from "@/lib/db/timesheets";
 import * as requestsDb from "@/lib/db/requests";
+import * as clientsDb from "@/lib/db/clients";
 import { uploadMedia } from "@/lib/storage/upload";
 import type { MediaEntityType } from "@/lib/db/media";
 
@@ -186,6 +187,20 @@ export async function createRequestAction(p: requestsDb.RequestInsert): Promise<
 }
 export async function updateRequestStatusAction(id: string, status: requestsDb.RequestStatus): Promise<ActionResult> {
   return wrap(() => requestsDb.updateRequestStatus(id, status), "/employes/demandes");
+}
+
+// ——— Clients (champs internes + notes) ———
+export async function updateClientInternalAction(
+  id: string,
+  update: clientsDb.InternalClientUpdate
+): Promise<ActionResult> {
+  return wrap(() => clientsDb.updateInternalClientFields(id, update), `/patron/clients/${id}`);
+}
+export async function addClientNoteAction(clientId: string, note: string): Promise<ActionResult> {
+  return wrap(() => clientsDb.addClientNote(clientId, note).then((id) => ({ id })), `/patron/clients/${clientId}`);
+}
+export async function createClientAction(p: clientsDb.ClientInsert): Promise<ActionResult> {
+  return wrap(() => clientsDb.createClientRecord(p).then((id) => ({ id })), "/patron/clients");
 }
 
 // ——— Upload (retourne url + fileId ou erreur) ———

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { Field } from "@/components/ui/Field";
@@ -16,6 +16,8 @@ const inputClass =
 
 export default function NouveauProjetPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const clientId = searchParams.get("client_id") ?? undefined;
   const [titre, setTitre] = useState("");
   const [adresse, setAdresse] = useState("");
   const [statut, setStatut] = useState<StatutProjet>("À planifier");
@@ -33,6 +35,7 @@ export default function NouveauProjetPage() {
     }
     setSaving(true);
     const result = await createProjectAction({
+      client_id: clientId ?? null,
       title: titre.trim(),
       address: adresse.trim() || null,
       status: statut,

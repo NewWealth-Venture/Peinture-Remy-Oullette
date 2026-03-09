@@ -47,6 +47,7 @@ export const directionNavigation: NavGroup[] = [
     items: [
       { href: "/patron/centre", label: "Dashboard direction" },
       { href: "/accueil/agenda", label: "Agenda" },
+      { href: "/patron/clients", label: "Clients" },
       { href: "/patron/projets", label: "Chantiers / Projets" },
       { href: "/accueil/estime", label: "Estimés" },
       { href: "/patron/rapports", label: "Rapports" },
@@ -78,7 +79,7 @@ const PATHS_EMPLOYES_ONLY = ["/employes/affectations", "/employes/avancement", "
 
 /** Détermine la catégorie à partir du pathname. Pour les pages partagées (agenda, annonces), utilise storedCategory si fourni. */
 export function getCategoryForPath(pathname: string, storedCategory?: NavCategory | null): NavCategory {
-  const inDirection = PATHS_DIRECTION_ONLY.some((p) => pathname === p || pathname.startsWith(p + "/")) || pathname.startsWith("/patron/");
+  const inDirection = pathname.startsWith("/patron/");
   if (inDirection) return "direction";
   const inEmployes = PATHS_EMPLOYES_ONLY.some((p) => pathname === p || pathname.startsWith(p + "/")) || pathname.startsWith("/employes/");
   if (inEmployes) return "employes";

@@ -28,6 +28,8 @@ const pageLabelMap: Record<string, string> = {
   "/patron/finances": "Finances",
   "/patron/parametres": "Paramètres",
   "/patron/projets/nouveau": "Nouveau chantier",
+  "/patron/clients": "Clients",
+  "/patron/clients/nouveau": "Nouveau client",
 };
 
 function getPageLabel(pathname: string): string {
@@ -38,6 +40,8 @@ function getPageLabel(pathname: string): string {
     if (pathname.startsWith("/patron/projets/") && pathname !== "/patron/projets" && pathname !== "/patron/projets/nouveau")
       return "Détail chantier";
     if (pathname.startsWith("/patron/inventaire/")) return pageLabelMap["/patron/inventaire"] || "Inventaire";
+    if (pathname.startsWith("/patron/clients/") && pathname !== "/patron/clients" && pathname !== "/patron/clients/nouveau")
+      return "Fiche client";
   }
   return "Vue d'ensemble";
 }
