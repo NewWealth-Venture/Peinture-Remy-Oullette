@@ -79,13 +79,84 @@ export async function addProjectMaterialUsageAction(
 
 // ——— Employees ———
 export async function createEmployeeAction(p: employeesDb.EmployeeInsert): Promise<ActionResult> {
-  return wrap(() => employeesDb.createEmployee(p), "/employes/liste");
+  try {
+    const id = await employeesDb.createEmployee(p);
+    revalidatePath("/patron/employes");
+    revalidatePath("/employes/liste");
+    return { success: true, id };
+  } catch (e) {
+    return { success: false, error: (e as Error)?.message ?? "Erreur serveur" };
+  }
 }
 export async function updateEmployeeAction(id: string, p: Partial<employeesDb.EmployeeInsert>): Promise<ActionResult> {
-  return wrap(() => employeesDb.updateEmployee(id, p), "/employes/liste");
+  try {
+    await employeesDb.updateEmployee(id, p);
+    revalidatePath("/patron/employes");
+    revalidatePath(`/patron/employes/${id}`);
+    revalidatePath("/employes/liste");
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: (e as Error)?.message ?? "Erreur serveur" };
+  }
 }
 export async function deleteEmployeeAction(id: string): Promise<ActionResult> {
-  return wrap(() => employeesDb.deleteEmployee(id), "/employes/liste");
+  try {
+    await employeesDb.deleteEmployee(id);
+    revalidatePath("/patron/employes");
+    revalidatePath("/employes/liste");
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: (e as Error)?.message ?? "Erreur serveur" };
+  }
+}
+export async function addEmployeeNoteAction(employeeId: string, note: string, noteType: employeesDb.NoteType): Promise<ActionResult> {
+  return wrap(() => employeesDb.addEmployeeNote({ employee_id: employeeId, note, note_type: noteType }).then((id) => ({ id })), `/patron/employes/${employeeId}`);
+}
+export async function addEmployeeTrainingAction(p: Parameters<typeof employeesDb.addEmployeeTraining>[0]): Promise<ActionResult> {
+  return wrap(() => employeesDb.addEmployeeTraining(p).then((id) => ({ id })), "/patron/employes");
+}
+export async function updateEmployeeTrainingAction(id: string, p: Parameters<typeof employeesDb.updateEmployeeTraining>[1]): Promise<ActionResult> {
+  return wrap(() => employeesDb.updateEmployeeTraining(id, p), "/patron/employes");
+}
+export async function addEmployeeCompensationAction(p: Parameters<typeof employeesDb.addCompensationHistory>[0]): Promise<ActionResult> {
+  return wrap(() => employeesDb.addCompensationHistory(p).then((id) => ({ id })), "/patron/employes");
+}
+export async function uploadEmployeePhotoAction(employeeId: string, formData: FormData): Promise<{ success: true; url: string } | { success: false; error: string }> {
+  const file = formData.get("file") as File | null;
+  if (!file?.size) return { success: false, error: "Fichier manquant" };
+  try {
+    const { uploadEmployeePhoto } = await import("@/lib/storage/employee");
+    const { url } = await uploadEmployeePhoto(employeeId, file);
+    revalidatePath(`/patron/employes/${employeeId}`);
+    revalidatePath("/patron/employes");
+    return { success: true, url };
+  } catch (e) {
+    return { success: false, error: (e as Error)?.message ?? "Erreur upload" };
+  }
+}
+export async function uploadEmployeeDocumentAction(
+  employeeId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  const file = formData.get("file") as File | null;
+  const document_type = formData.get("document_type") as employeesDb.DocumentType | null;
+  const title = formData.get("title") as string | null;
+  if (!file?.size || !document_type || !title?.trim()) return { success: false, error: "Fichier, type et titre requis" };
+  try {
+    const { uploadEmployeeDocument } = await import("@/lib/storage/employee");
+    const expires_at = (formData.get("expires_at") as string) || undefined;
+    await uploadEmployeeDocument(employeeId, file, {
+      document_type,
+      title: title.trim(),
+      expires_at: expires_at || null,
+      notes: (formData.get("notes") as string) || null,
+    });
+    revalidatePath(`/patron/employes/${employeeId}`);
+    revalidatePath("/patron/employes");
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: (e as Error)?.message ?? "Erreur upload" };
+  }
 }
 
 // ——— Briefs ———

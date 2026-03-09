@@ -58,7 +58,7 @@ export const directionNavigation: NavGroup[] = [
     label: "Ressources",
     icon: Users,
     items: [
-      { href: "/employes/liste", label: "Employés" },
+      { href: "/patron/employes", label: "Employés" },
       { href: "/patron/inventaire", label: "Inventaire" },
       { href: "/accueil/annonces", label: "Communication / Annonces" },
     ],
