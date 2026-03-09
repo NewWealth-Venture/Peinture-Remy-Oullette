@@ -254,6 +254,12 @@ export async function updateInternalClientFields(id: string, update: InternalCli
   if (error) throw error;
 }
 
+export async function deleteClient(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("clients").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function upsertQuickBooksClient(mapped: ClientInsert & { quickbooks_customer_id: string }): Promise<string> {
   const supabase = await createClient();
   const { data: existing } = await supabase

@@ -202,6 +202,9 @@ export async function addClientNoteAction(clientId: string, note: string): Promi
 export async function createClientAction(p: clientsDb.ClientInsert): Promise<ActionResult> {
   return wrap(() => clientsDb.createClientRecord(p).then((id) => ({ id })), "/patron/clients");
 }
+export async function deleteClientAction(id: string): Promise<ActionResult> {
+  return wrap(() => clientsDb.deleteClient(id), "/patron/clients");
+}
 
 // ——— Upload (retourne url + fileId ou erreur) ———
 export async function uploadMediaAction(

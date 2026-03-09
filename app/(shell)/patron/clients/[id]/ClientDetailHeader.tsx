@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { RefreshCw, FolderKanban, FileBarChart, Receipt, StickyNote, ExternalLink } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { RefreshCw, FolderKanban, FileBarChart, Receipt, StickyNote, ExternalLink, Trash2 } from "lucide-react";
 import type { DbClient } from "@/lib/db/clients";
+import { deleteClientAction } from "@/app/actions/data";
+import { useState } from "react";
 
 const SOURCE_LABELS: Record<string, string> = {
   quickbooks: "QuickBooks",
@@ -10,6 +13,17 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 export function ClientDetailHeader({ client }: { client: DbClient }) {
+  const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (typeof window !== "undefined" && !window.confirm(`Supprimer le client « ${client.display_name || "Sans nom"} » ? Cette action est irréversible.`)) return;
+    setDeleting(true);
+    const result = await deleteClientAction(client.id);
+    setDeleting(false);
+    if (result.success) router.push("/patron/clients");
+  };
+
   return (
     <header className="border-b border-neutral-border pb-4 mb-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -83,6 +97,16 @@ export function ClientDetailHeader({ client }: { client: DbClient }) {
             aria-label="Créer facture (bientôt)"
           >
             <Receipt size={16} strokeWidth={1.7} /> Facture
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="inline-flex items-center gap-1.5 h-9 px-3 text-caption font-medium border border-neutral-border rounded bg-neutral-white text-neutral-text hover:bg-red-50 hover:text-red-600 hover:border-red-200 focus-ring disabled:opacity-60"
+            style={{ borderRadius: "6px" }}
+            aria-label="Supprimer le client"
+          >
+            <Trash2 size={16} strokeWidth={1.7} /> Supprimer
           </button>
         </div>
       </div>
