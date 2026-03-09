@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Table } from "@/components/ui/Table";
 import type { DbEmployee } from "@/lib/db/employees";
 import { deleteEmployeeAction } from "@/app/actions/data";
-import { getEmployeePhotoUrl } from "@/lib/storage/employee";
+import { getEmployeePhotoUrl } from "@/lib/storage/employee-urls";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 

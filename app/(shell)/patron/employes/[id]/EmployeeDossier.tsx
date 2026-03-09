@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Tabs } from "@/components/ui/Tabs";
 import { SectionCard } from "@/components/SectionCard";
-import { getEmployeePhotoUrl, getEmployeeDocumentUrl } from "@/lib/storage/employee";
+import { getEmployeePhotoUrl, getEmployeeDocumentUrl } from "@/lib/storage/employee-urls";
 import type {
   DbEmployee,
   DbEmployeeDocument,
