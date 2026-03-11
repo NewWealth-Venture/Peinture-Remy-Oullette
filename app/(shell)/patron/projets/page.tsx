@@ -1,24 +1,10 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
-import { Table } from "@/components/ui/Table";
 import { EmptyState } from "@/components/EmptyState";
 import { listProjects } from "@/lib/db/projects";
-import { FolderKanban, Plus, Pencil, Trash2 } from "lucide-react";
+import { FolderKanban, Plus } from "lucide-react";
 import { PatronProjetsClient } from "./PatronProjetsClient";
-
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("fr-CA", { year: "numeric", month: "short", day: "numeric" });
-}
-
-const STATUT_LABELS: Record<string, string> = {
-  "À planifier": "À planifier",
-  "En cours": "En cours",
-  "En attente": "En attente",
-  Terminé: "Terminé",
-};
 
 export default async function PatronProjetsPage() {
   const projects = await listProjects();
@@ -61,8 +47,6 @@ export default async function PatronProjetsPage() {
               start_date: p.start_date,
               end_date: p.end_date,
             }))}
-            formatDate={formatDate}
-            statutLabels={STATUT_LABELS}
           />
         )}
       </SectionCard>

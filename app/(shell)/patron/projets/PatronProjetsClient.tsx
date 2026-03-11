@@ -16,15 +16,20 @@ type Row = {
   end_date: string | null;
 };
 
-export function PatronProjetsClient({
-  projects,
-  formatDate,
-  statutLabels,
-}: {
-  projects: Row[];
-  formatDate: (iso: string | null | undefined) => string;
-  statutLabels: Record<string, string>;
-}) {
+const STATUT_LABELS: Record<string, string> = {
+  "À planifier": "À planifier",
+  "En cours": "En cours",
+  "En attente": "En attente",
+  Terminé: "Terminé",
+};
+
+function formatDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("fr-CA", { year: "numeric", month: "short", day: "numeric" });
+}
+
+export function PatronProjetsClient({ projects }: { projects: Row[] }) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -55,7 +60,7 @@ export function PatronProjetsClient({
           </td>
           <td className="py-3 px-4">
             <span className="inline-flex px-2 py-0.5 rounded text-caption-xs font-medium bg-neutral-bg-subtle text-neutral-text">
-              {statutLabels[p.status] ?? p.status}
+              {STATUT_LABELS[p.status] ?? p.status}
             </span>
           </td>
           <td className="py-3 px-4 text-caption text-neutral-text-secondary">{p.address || "—"}</td>
