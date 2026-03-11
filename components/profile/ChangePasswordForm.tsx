@@ -1,8 +1,8 @@
-\"use client\";
+"use client";
 
-import { useState } from \"react\";
-import { Eye, EyeOff, Lock } from \"lucide-react\";
-import { changePasswordAction } from \"@/app/actions/auth\";
+import { useState } from "react";
+import { Eye, EyeOff, Lock } from "lucide-react";
+import { changePasswordAction } from "@/app/actions/auth";
 
 type FieldError = string | null;
 
@@ -69,8 +69,6 @@ export function ChangePasswordForm() {
 
     setLoading(true);
     try {
-      // Supabase Auth ne permet pas de vérifier le mot de passe actuel côté client
-      // sans nouvelle connexion. Ici on effectue une re-auth simple.
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
       const {
@@ -95,7 +93,7 @@ export function ChangePasswordForm() {
 
       const result = await changePasswordAction(newPassword);
       if (!result.success) {
-        if (result.code === \"session_expired\" || result.code === \"not_authenticated\") {
+        if (result.code === "session_expired" || result.code === "not_authenticated") {
           setError("Votre session a expiré. Veuillez vous reconnecter.");
         } else {
           setError(result.error || "Impossible de mettre à jour le mot de passe.");
