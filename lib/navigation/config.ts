@@ -5,6 +5,7 @@ import {
   Package,
   Users,
   Settings,
+  User,
 } from "lucide-react";
 
 export type NavCategory = "employes" | "direction";
@@ -70,6 +71,14 @@ export const directionNavigation: NavGroup[] = [
     items: [
       { href: "/patron/finances", label: "Finances" },
       { href: "/patron/parametres", label: "Paramètres" },
+    ],
+  },
+  {
+    id: "compte",
+    label: "Compte",
+    icon: User,
+    items: [
+      { href: "/profil", label: "Mon profil" },
     ],
   },
 ];

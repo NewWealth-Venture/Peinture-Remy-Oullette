@@ -32,6 +32,7 @@ const pageLabelMap: Record<string, string> = {
   "/patron/clients/nouveau": "Nouveau client",
   "/patron/employes": "Employés",
   "/patron/employes/nouveau": "Nouveau employé",
+  "/profil": "Mon profil",
 };
 
 function getPageLabel(pathname: string): string {
