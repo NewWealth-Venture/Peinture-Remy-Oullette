@@ -7,6 +7,7 @@ import { EmptyInline } from "@/components/EmptyInline";
 import { Field } from "@/components/ui/Field";
 import { createDailyProgressAction } from "@/app/actions/data";
 import { TrendingUp } from "lucide-react";
+import { VoiceReportRecorder } from "@/components/voice/VoiceReportRecorder";
 
 const inputClass =
   "w-full h-9 px-3 border border-neutral-border rounded bg-neutral-white text-body text-neutral-text focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 focus:outline-none";
@@ -95,6 +96,11 @@ export function AvancementClient({ projects, initialProgress }: { projects: Proj
           </div>
         </form>
       </SectionCard>
+
+      <VoiceReportRecorder
+        projectOptions={projects}
+        employeeOptions={[]}
+      />
 
       <SectionCard title="Historique (par projet)">
         {!projetId ? (

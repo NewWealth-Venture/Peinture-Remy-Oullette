@@ -29,6 +29,7 @@ import {
   uploadMediaAction,
   createDailyProgressAction,
 } from "@/app/actions/data";
+import { VoiceReportRecorder } from "@/components/voice/VoiceReportRecorder";
 
 const inputClass =
   "w-full h-9 px-3 border border-neutral-border rounded bg-neutral-white text-body text-neutral-text focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 focus:outline-none";
@@ -236,6 +237,13 @@ export function ProjetDetailClient({
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
         {/* COLONNE GAUCHE 70% */}
         <div className="space-y-4 min-w-0">
+          {/* 0) Compte rendu vocal */}
+          <VoiceReportRecorder
+            projectOptions={[{ id, title: projet.titre }]}
+            employeeOptions={[]}
+            defaultProjectId={id}
+          />
+
           {/* 1) Activité récente */}
           <SectionCard title="Activité récente">
             <div className="py-1">
