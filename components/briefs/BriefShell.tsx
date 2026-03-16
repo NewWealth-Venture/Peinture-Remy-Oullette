@@ -10,7 +10,8 @@ import { useBriefsStore, useFilteredBriefs } from "@/lib/briefs/store";
 import type { BriefStatus } from "@/lib/briefs/types";
 import { useProjets } from "@/lib/store";
 import { useEmployes } from "@/lib/store";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Mic } from "lucide-react";
+import { VoiceBriefWizard } from "./VoiceBriefWizard";
 
 const STATUTS: BriefStatus[] = ["Brouillon", "Envoyé", "En cours", "Terminé"];
 const PRIORITES: ("Basse" | "Normale" | "Haute")[] = ["Basse", "Normale", "Haute"];
@@ -68,6 +69,7 @@ export function BriefShell({ mode }: { mode: "patron" | "employe" }) {
   const [filtreChantier, setFiltreChantier] = useState("");
   const [filtrePriorite, setFiltrePriorite] = useState<"" | "Basse" | "Normale" | "Haute">("");
   const [modalNewOpen, setModalNewOpen] = useState(false);
+  const [modalVoiceOpen, setModalVoiceOpen] = useState(false);
   const [newTitre, setNewTitre] = useState("");
   const [newChantierId, setNewChantierId] = useState("");
   const [newPriorite, setNewPriorite] = useState<"Basse" | "Normale" | "Haute">("Normale");
@@ -132,9 +134,22 @@ export function BriefShell({ mode }: { mode: "patron" | "employe" }) {
           {PRIORITES.map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
         {isPatron && (
-          <button type="button" onClick={() => setModalNewOpen(true)} className="h-9 px-3.5 text-caption font-medium text-white bg-primary-orange rounded hover:opacity-90 focus-ring flex items-center gap-1.5">
-            <Plus size={18} strokeWidth={1.7} /> Nouveau brief
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => setModalVoiceOpen(true)}
+              className="h-9 px-3.5 text-caption font-medium text-white bg-primary-blue rounded hover:opacity-90 focus-ring flex items-center gap-1.5"
+            >
+              <Mic size={18} strokeWidth={1.7} /> Nouveau brief vocal
+            </button>
+            <button
+              type="button"
+              onClick={() => setModalNewOpen(true)}
+              className="h-9 px-3.5 text-caption font-medium text-white bg-primary-orange rounded hover:opacity-90 focus-ring flex items-center gap-1.5"
+            >
+              <Plus size={18} strokeWidth={1.7} /> Nouveau brief
+            </button>
+          </>
         )}
       </div>
 
@@ -202,6 +217,15 @@ export function BriefShell({ mode }: { mode: "patron" | "employe" }) {
           </div>
         </div>
       </Modal>
+
+      {isPatron && (
+        <VoiceBriefWizard
+          open={modalVoiceOpen}
+          onClose={() => setModalVoiceOpen(false)}
+          projects={projets.map((p) => ({ id: p.id, title: p.titre }))}
+          employees={employes.map((e) => ({ id: e.id, name: e.nom }))}
+        />
+      )}
     </div>
   );
 }
